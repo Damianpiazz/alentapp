@@ -14,16 +14,14 @@ titulo: Alta de Sancion Disciplinaria
 Permitir que un administrativo registre una sanción disciplinaria a un socio del club, definiendo el motivo, la severidad y el período de vigencia (fecha de inicio y fin). Esta información será utilizada posteriormente por el sistema para determinar restricciones sobre el socio.
 
 ### User Personas
-* **Nombre**: Administrativo 
-* **Necesidad:** registrar una sanción indicando el motivo y el rango de fechas para dejar constancia formal de una falta cometida.
+* **Nombre**: Alberto (Administrativo) 
+* **Necesidad:** Registrar una sanción indicando el motivo y el rango de fechas para dejar constancia formal de una falta cometida.
 
-### Criterios de Aceptación (User Stories)
+### Criterios de Aceptación 
 
-- Como administrativo, quiero registrar una sanción a un socio con fecha de inicio y fin, para dejar constancia formal de la falta cometida.
-  - **Escenario de éxito:** Si todos los campos requeridos son válidos y `end_date` es posterior a `start_date`, el sistema guarda la sanción y responde con los datos creados.
-  - **Escenario de fallo (fechas inválidas):** Si `end_date` es igual o anterior a `start_date`, el sistema debe responder especificando el error y sin guardar el registro.
-  - **Escenario de fallo (socio inexistente):** Si el `member_id` no corresponde a un socio existente, el sistema debe responder especificando el error y sin guardar el registro.
-  - **Escenario de fallo (datos incompletos):** Si faltan campos obligatorios (`motivo`, `start_date`, `end_date`), el sistema debe rechazar la solicitud.
+- El sistema debe validar que `end_date` sea estrictamente posterior a `start_date`.
+- El sistema debe validar que el `member_id` corresponda a un socio existente.
+- Si faltan campos obligatorios (`reason`, `start_date`, `end_date`), el sistema debe rechazar la solicitud.
 
 ---
 
@@ -53,9 +51,10 @@ export interface Discipline {
 }
 ```
 
-### Contrato de API (Shared DTOs)
+### Contrato de API 
 
-**Crear sanción**
+Definiremos los tipos en el paquete compartido para asegurar sincronización:
+
 - **Endpoint:** `POST /api/v1/disciplines`
 - **Request Body (CreateDisciplineRequest):**
 
@@ -66,18 +65,6 @@ export interface Discipline {
   start_date: string;      
   end_date: string;         
   is_total_suspension: boolean;
-}
-```
-- **Response Body (DisciplineResponse):**
-```ts
-{
-  id: string;
-  member_id: string;
-  reason: string;
-  start_date: string;
-  end_date: string;
-  is_total_suspension: boolean;
-  createdAt: string;
 }
 ```
 
