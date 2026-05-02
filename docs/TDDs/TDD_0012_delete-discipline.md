@@ -14,54 +14,32 @@ titulo: Eliminación de Sanción Disciplinaria
 Permitir que un administrativo elimine una sanción disciplinaria registrada en el sistema, en caso de error de carga o invalidación de la sanción.
 
 ### User Personas
-* **Nombre:** Administrativo
-* **Necesidad:** Eliminar una sanción incorrectamente registrada o que no debería haberse aplicado.
+* **Nombre:** Alberto (Administrativo)
+* **Necesidad:** Eliminar una sanción incorrectamente registrada o que no debería haberse aplicado, de forma rapida desde el panel de administracion. Necesita una advertencia antes de borrar para no cometer equivocaciones irreparables.
 
-### Criterios de Aceptación (User Stories)
-
-- Como administrativo, quiero eliminar una sanción para corregir errores en el registro.
-  - **Escenario de éxito:** Si la sanción existe, el sistema la elimina correctamente y responde con éxito.
-  - **Escenario de fallo (ID inexistente):** Si el `id` no corresponde a una sanción existente, el sistema responde con error sin modificar nada.
+### Criterios de Aceptación 
+- El sistema debe pedir una confirmación explícita (advertencia visual) antes de proceder con el borrado.
+- El sistema debe validar que la sanción exista antes de intentar borrarla.
+- El sistema debe realizar un borrado físico de la base de datos (hard delete).
+- Si el borrado es exitoso, la tabla debe actualizarse automáticamente.
 
 ---
 
 ## Diseño Técnico (RFC)
 
-### Modelo de Datos
+### Contrato de API (@alentapp/shared)
+Al tratarse de una operación destructiva que solo requiere conocer el identificador, no se envía cuerpo en la petición HTTP.
 
-Se utilizará la entidad `Discipline` con las siguientes propiedades y restricciones:
-
-- `id`: Identificador único universal (UUID).
-- `member_id`: Referencia al socio sancionado (FK hacia Member).
-- `reason`: Cadena de texto describiendo la falta cometida.
-- `start_date`: Fecha de inicio de la sanción.
-- `end_date`: Fecha de fin de la sanción.
-- `is_total_suspension`: Booleano.
-- `createdAt`: Fecha de creación autogenerada.
-
-```ts
-export interface Discipline {
-  id: string;
-  member_id: string;
-  reason: string;
-  start_date: Date;
-  end_date: Date;
-  is_total_suspension: boolean;
-  createdAt: Date;
-}
-```
-
-### Contrato de API (Shared DTOs)
-
-**Eliminar sanción**
-- **Endpoint:** `DELETE /api/v1/disciplines/:id`
+- Endpoint: `DELETE /api/v1/disciplines/:id`
+- Request Body: `None`
+- Response: `204 No Content` en caso de éxito.
 
 
 ### Componentes de Arquitectura Hexagonal
-1. Puerto: DisciplineRepository (Interface en el Dominio).
-2. Caso de Uso: DeleteDiscipline (Verifica que la sanción existe antes de eliminar).
-3. Adaptador de Salida: DB persistence adapter (Implementación real en BD).
-4. Adaptador de Entrada: DisciplineController (Rutas HTTP).
+1. **Puerto**: `DisciplineRepository` (Método `delete(id)`).
+2. **Caso de Uso**: `DeleteDisciplineUseCase` (Comprueba existencia previa vía `findById` y delega la eliminación).
+3. **Adaptador de Salida**: `PostgresDisciplineRepository` (Eliminación usando el método `delete` de Prisma).
+4. **Adaptador de Entrada**: `DisciplineController` (Ruta HTTP que extrae el `id` y devuelve un status 204).
 
 ---
 
@@ -71,11 +49,14 @@ export interface Discipline {
 | ---------------------- | --------------------------------------------- | ------------------------- |
 | ID inexistente         | Mensaje: "Sanción no encontrada"              | 404 Not Found             |
 | Error de conexión a DB | Mensaje: "Error interno, reintente más tarde" | 500 Internal Server Error |
+| Eliminación exitosa    | Respuesta vacía                               | 204 No Content            |
+
 
 ---
 
 ## Plan de Implementación
-1. Crear tipos en shared y puerto en el Dominio.
-2. Implementar el caso de uso DeleteDiscipline.
-3. Implementar el repositorio y el controlador HTTP.
-4. Actualizar formulario en React para incluir opción de eliminar.
+1. Ampliar el `DisciplineRepository` y `PostgresDisciplineRepository` con el método `delete`.
+2. Crear la lógica de negocio en `DeleteDisciplineUseCase`.
+3. Crear el endpoint `DELETE /api/v1/disciplines/:id` en el `DisciplineController` y registrarlo en `app.ts`.
+4. Añadir el método `delete` al servicio Frontend (`disciplines.ts`).
+5. Enlazar el botón de eliminación en la vista correspondiente agregando la confirmación del navegador (`window.confirm`) antes de hacer la llamada.
