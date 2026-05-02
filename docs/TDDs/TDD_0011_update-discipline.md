@@ -11,51 +11,27 @@ titulo: Actualización de Sanción Disciplinaria
 ## Contexto de Negocio (PRD)
 
 ### Objetivo
-Permitir que un administrativo modifique los datos de una sanción disciplinaria existente (reason, período de vigencia o tipo de suspensión).
+Permitir que un administrativo modifique los datos de una sanción disciplinaria existente como motivo, período de vigencia o tipo de suspensión, en caso de error de carga o cambio en la decision disciplinaria.
 
 ### User Personas
-* **Nombre:** Administrativo
+* **Nombre:** Alberto (Administrativo)
 * **Necesidad:** Corregir o actualizar una sanción previamente registrada, ya sea por error de carga o cambio en la decisión disciplinaria.
 
-### Criterios de Aceptación (User Stories)
+### Criterios de Aceptación 
 
-- Como administrativo, quiero actualizar una sanción existente para corregir información o modificar su vigencia.
-  - **Escenario de éxito:** Si la sanción existe y los datos son válidos, el sistema actualiza el registro y devuelve la sanción modificada.
-  - **Escenario de fallo (ID inexistente):** Si el `id` no corresponde a una sanción existente, el sistema responde con error sin modificar nada.
-  - **Escenario de fallo (fechas inválidas):** Si `end_date` es igual o anterior a `start_date`, el sistema debe rechazar la actualización.
-  - **Escenario de fallo (body vacío):** Si no se envía ningún campo para actualizar, el sistema debe rechazar la solicitud.
+- El sistema debe permitir actualizar uno, varios o todos los campos de la sanción.
+- El sistema debe validar que, si se modifican las fechas, `end_date` sea estrictamente posterior a `start_date`.
+- Si solo se modifica una de las fechas, el sistema debe combinarla con la existente y validar la coherencia del rango.
+- El `member_id` no puede ser modificado para mantener la integridad histórica.
 
 ---
 
 ## Diseño Técnico (RFC)
 
-### Modelo de Datos
+### Contrato de API (@alentapp/shared)
 
-Se utilizará la entidad `Discipline` con las siguientes propiedades y restricciones:
+Se utilizará el paquete compartido para definir el cuerpo de la petición. Todos los campos son opcionales ya que se trata de una actualización parcial.
 
-- `id`: Identificador único universal (UUID).
-- `member_id`: Referencia al socio sancionado (FK hacia Member). No modificable.
-- `reason`: Cadena de texto describiendo la falta cometida.
-- `start_date`: Fecha de inicio de la sanción.
-- `end_date`: Fecha de fin de la sanción. Debe ser estrictamente posterior a `start_date`.
-- `is_total_suspension`: Booleano. Si es `true`, el socio queda bloqueado de todas las acciones.
-- `createdAt`: Fecha de creación autogenerada.
-
-```ts
-export interface Discipline {
-  id: string;
-  member_id: string;
-  reason: string;
-  start_date: Date;
-  end_date: Date;
-  is_total_suspension: boolean;
-  createdAt: Date;
-}
-```
-
-### Contrato de API (Shared DTOs)
-
-**Actualizar sanción**
 - **Endpoint:** `PUT /api/v1/disciplines/:id`
 - **Request Body (UpdateDisciplineRequest):**
 ```ts
@@ -66,24 +42,13 @@ export interface Discipline {
   is_total_suspension?: boolean;
 }
 ```
-- **Response Body (DisciplineResponse):**
-```ts
-{
-  id: string;
-  member_id: string;
-  reason: string;
-  start_date: string;
-  end_date: string;
-  is_total_suspension: boolean;
-  createdAt: string;
-}
-```
 
 ### Componentes de Arquitectura Hexagonal
-1. Puerto: DisciplineRepository (Interface en el Dominio).
-2. Caso de Uso: UpdateDiscipline (Valida fechas y busca la sanción antes de persistir).
-3. Adaptador de Salida: DB persistence adapter (Implementación real en BD).
-4. Adaptador de Entrada: DisciplineController (Rutas HTTP).
+1. **Puerto**: `DisciplineRepository` (Método `update(id, data)`).
+2. **Servicio de Dominio**: `DisciplineValidator` (Encargado de validar coherencia del rango de fechas).
+3. **Caso de Uso**: `UpdateDisciplineUseCase` (Orquesta la validación y llama al repositorio).
+4. **Adaptador de Salida**: `PostgresDisciplineRepository` (Actualización usando el método `update` de Prisma).
+5. **Adaptador de Entrada**: `DisciplineController` (Ruta HTTP que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
 
 ---
 
@@ -101,7 +66,8 @@ export interface Discipline {
 ---
 
 ## Plan de Implementación
-1. Crear tipos en shared y puerto en el Dominio.
-2. Implementar el caso de uso UpdateDiscipline.
-3. Implementar el repositorio y el controlador HTTP.
-4. Actualizar formulario en React y conectar con el endpoint del backend.
+1. Actualizar las interfaces en el paquete `@alentapp/shared` (`UpdateDisciplineRequest`).
+2. Ampliar el `DisciplineRepository` con el método `update`.
+3. Implementar la lógica en `UpdateDisciplineUseCase` utilizando el `DisciplineValidator`.
+4. Crear la ruta `PUT` en el controlador y enlazarla a la app de Fastify.
+5. Consumir el endpoint desde el Frontend reutilizando el formulario de creación para permitir la edición.
