@@ -33,20 +33,20 @@ Se utilizará la entidad `Discipline` con las siguientes propiedades y restricci
 
 - `id`: Identificador único universal (UUID).
 - `member_id`: Referencia al socio sancionado (FK hacia Member).
-- `motivo`: Cadena de texto describiendo la falta cometida.
-- `fecha_inicio`: Fecha de inicio de la sanción.
-- `fecha_fin`: Fecha de fin de la sanción.
-- `es_suspension_total`: Booleano.
+- `reason`: Cadena de texto describiendo la falta cometida.
+- `start_date`: Fecha de inicio de la sanción.
+- `end_date`: Fecha de fin de la sanción.
+- `is_total_suspension`: Booleano.
 - `createdAt`: Fecha de creación autogenerada.
 
 ```ts
 export interface Discipline {
   id: string;
   member_id: string;
-  motivo: string;
-  fecha_inicio: Date;
-  fecha_fin: Date;
-  es_suspension_total: boolean;
+  reason: string;
+  start_date: Date;
+  end_date: Date;
+  is_total_suspension: boolean;
   createdAt: Date;
 }
 ```

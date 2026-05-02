@@ -11,7 +11,7 @@ titulo: Actualización de Sanción Disciplinaria
 ## Contexto de Negocio (PRD)
 
 ### Objetivo
-Permitir que un administrativo modifique los datos de una sanción disciplinaria existente (motivo, período de vigencia o tipo de suspensión).
+Permitir que un administrativo modifique los datos de una sanción disciplinaria existente (reason, período de vigencia o tipo de suspensión).
 
 ### User Personas
 * **Nombre:** Administrativo
@@ -20,12 +20,10 @@ Permitir que un administrativo modifique los datos de una sanción disciplinaria
 ### Criterios de Aceptación (User Stories)
 
 - Como administrativo, quiero actualizar una sanción existente para corregir información o modificar su vigencia.
-  - **Escenario de éxito:** Si la sanción existe y los datos son válidos,
-    el sistema actualiza el registro y devuelve la sanción modificada.
+  - **Escenario de éxito:** Si la sanción existe y los datos son válidos, el sistema actualiza el registro y devuelve la sanción modificada.
   - **Escenario de fallo (ID inexistente):** Si el `id` no corresponde a una sanción existente, el sistema responde con error sin modificar nada.
-  - **Escenario de fallo (fechas inválidas):** Si `fecha_fin` es igual o anterior a `fecha_inicio`, el sistema debe rechazar la actualización.
-  - **Escenario de fallo (body vacío):** Si no se envía ningún campo para
-    actualizar, el sistema debe rechazar la solicitud.
+  - **Escenario de fallo (fechas inválidas):** Si `end_date` es igual o anterior a `start_date`, el sistema debe rechazar la actualización.
+  - **Escenario de fallo (body vacío):** Si no se envía ningún campo para actualizar, el sistema debe rechazar la solicitud.
 
 ---
 
@@ -37,20 +35,20 @@ Se utilizará la entidad `Discipline` con las siguientes propiedades y restricci
 
 - `id`: Identificador único universal (UUID).
 - `member_id`: Referencia al socio sancionado (FK hacia Member). No modificable.
-- `motivo`: Cadena de texto describiendo la falta cometida.
-- `fecha_inicio`: Fecha de inicio de la sanción.
-- `fecha_fin`: Fecha de fin de la sanción. Debe ser estrictamente posterior a `fecha_inicio`.
-- `es_suspension_total`: Booleano. Si es `true`, el socio queda bloqueado de todas las acciones.
+- `reason`: Cadena de texto describiendo la falta cometida.
+- `start_date`: Fecha de inicio de la sanción.
+- `end_date`: Fecha de fin de la sanción. Debe ser estrictamente posterior a `start_date`.
+- `is_total_suspension`: Booleano. Si es `true`, el socio queda bloqueado de todas las acciones.
 - `createdAt`: Fecha de creación autogenerada.
 
 ```ts
 export interface Discipline {
   id: string;
   member_id: string;
-  motivo: string;
-  fecha_inicio: Date;
-  fecha_fin: Date;
-  es_suspension_total: boolean;
+  reason: string;
+  start_date: Date;
+  end_date: Date;
+  is_total_suspension: boolean;
   createdAt: Date;
 }
 ```
@@ -62,10 +60,10 @@ export interface Discipline {
 - **Request Body (UpdateDisciplineRequest):**
 ```ts
 {
-  motivo?: string;
-  fecha_inicio?: string;   
-  fecha_fin?: string;      
-  es_suspension_total?: boolean;
+  reason?: string;
+  start_date?: string;   
+  end_date?: string;      
+  is_total_suspension?: boolean;
 }
 ```
 - **Response Body (DisciplineResponse):**
@@ -73,10 +71,10 @@ export interface Discipline {
 {
   id: string;
   member_id: string;
-  motivo: string;
-  fecha_inicio: string;
-  fecha_fin: string;
-  es_suspension_total: boolean;
+  reason: string;
+  start_date: string;
+  end_date: string;
+  is_total_suspension: boolean;
   createdAt: string;
 }
 ```
@@ -94,8 +92,8 @@ export interface Discipline {
 | Escenario                             | Resultado Esperado                                           | Código HTTP               |
 | ------------------------------------- | ------------------------------------------------------------ | ------------------------- |
 | Body vacío                            | Mensaje: "Debe enviarse al menos un campo para actualizar"   | 400 Bad Request           |
-| `fecha_fin` igual a `fecha_inicio`    | Mensaje: "La fecha de fin debe ser posterior a la de inicio" | 400 Bad Request           |
-| `fecha_fin` anterior a `fecha_inicio` | Mensaje: "La fecha de fin debe ser posterior a la de inicio" | 400 Bad Request           |
+| `end_date` igual a `start_date`    | Mensaje: "La fecha de fin debe ser posterior a la de inicio" | 400 Bad Request           |
+| `end_date` anterior a `start_date` | Mensaje: "La fecha de fin debe ser posterior a la de inicio" | 400 Bad Request           |
 | Formato de fecha inválido             | Mensaje: "Formato de fecha inválido, use YYYY-MM-DD"         | 400 Bad Request           |
 | ID inexistente                        | Mensaje: "Sanción no encontrada"                             | 404 Not Found             |
 | Error de conexión a DB                | Mensaje: "Error interno, reintente más tarde"                | 500 Internal Server Error |
