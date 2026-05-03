@@ -25,7 +25,6 @@ Permitir el registro de préstamos de equipos a los socios de categoria "Senior"
 - El sistema debe validar que el socio no sea de categoria "Cadete".
 - El sistema debe validar que el nombre del item (`item_name`) no este vacío y exista.
 - El prestamo debe quedar guardado con status "Loaned" por defecto.
-- `real_due_date`debe inicializarce como null.
 
 
 ## Diseño Técnico (RFC)
@@ -38,9 +37,8 @@ Se definirá la entidad `EquipmentLoan` con las siguientes propiedades y restric
 - `item_name`: Cadena de texto.
 - `status`: Enumeración (`Loaned`, `Returned`, `Demaged`).
 - `loan_date`: Fecha de creación autogenerada.
-- `due_date`: Fecha y hora de devolución.
+- `due_date`: Fecha y hora de devolución (cantidad de días predefinidos)
 - `member_id`: UUID (FK).
-- `real_due_date`: Fecha en que se devuelve el equipo asociado a un prestamo (inicialmente null).
 
 ### Contrato de API (@alentapp/shared)
 
@@ -53,7 +51,7 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición de cr
 {
   item_name: string;
   due_date: datetime;
-  member_id: int;
+  member_id: string;
 }
 ```
 

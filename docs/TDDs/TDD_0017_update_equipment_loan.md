@@ -12,50 +12,46 @@ titulo: Actualización de Préstamos de un Equipo Existentes
 
 ### Objetivo
 
-Permitir la actualización de la fecha de devolución (`due_date`) de un préstamo, afectando así a su cambio de estado (`status: Loaned, Returned, Demaged`).
+Registrar el estado en que se encuentra el equipo a la hora de la devolución, si está bien: `Returned` y si esta dañado: `Demaged`.
 
 ### User Persona
 
 - Nombre: Alberto (Administrativo / Coordinador Deportivo).
-- Necesidad: Modificar la la fecha de devolución (`due_date`) de un préstamo, sin alterar el resto de la información del mismo como la fecha de creación, el socio o equipo asociados.
+- Necesidad: Registrar una devolución de un préstamo y el estado del equipo prestado.
 
 ### Criterios de Aceptación
 
-- El sistema debe impedir la modificación del nombre del equipo (`item_name`), del estado (`status`), fecha de creació, (`loan_date`) ni id del miembro (`member_id`).
-- El sistema solo debe permitir la edición de `due_date` o `real_due_date`.
-- Si se edita `due_date` el sistema debe corroborar que si el prestamo no está en estado `Returned`, pueda cambiar de estado `Loaned` a `Demaged` (`due_date` ingesado < fecha actual) o viceversa (`due_date` ingesado > fecha actual) y cambie de `Demaged` a `Loaned`.
-- Si se edita `real_due_date` el sistema debe corroborar que si el prestamo no está en estado `Returned`, pueda cambiar de estado `Loaned` a `Returned` o de `Demaged` a `Returned` (`real_due_date` ingesado <= fecha actual).
-- Si se edita `real_due_date` el sistema debe corroborar que si el prestamo está en estado `Returned`, pueda cambiar a `Loaned` (`real_due_date` > fecha actual).
+- El sistema debe impedir la modificación del nombre del equipo (`item_name`), fecha de creació, (`loan_date`) ni id del miembro (`member_id`),fecha de devolución esperada (`due_date`).
+- Si el equipo está bien, se actualiza el `status` a `Returned` y si esta dañado a `Demaged`.
+- El prestamo debe estar inicialment en estado `Loaned`.
 
 ## Diseño Técnico (RFC)
 
 ### Contrato de API (@alentapp/shared)
 
-Se utilizará el paquete compartido para definir el cuerpo de la petición. Todos los campos son opcionales ya que se podria modificar uno o ambos de ellos.
+Se utilizará el paquete compartido para definir el cuerpo de la petición. Todos los campos son obligatorios.
 
 - Endpoint: `PUT /api/v1/equipment-loan/:id`
 - Request Body (`UpdateEquipmentLoanRequest`):
 
 ```ts
 {
-    due_date?: datetime;
-    real_due_date?: datetime;
+    status: `Returned` | `Demaged`;
 }
 ```
 
 ### Componentes de Arquitectura Hexagonal
 
 1. **Puerto**: `EquipmentLoanRepository` (Método `update(id, data)`).
-2. **Servicio de Dominio**: `EquipmentLoanValidator` (valida los campos y la existencia del prestamo y llama al `UpdateSportUseCase` para los cambios de estado).
-3. **Caso de Uso**: `UpdateSportUseCase` (Realiza las validaciones de los cambios de estados descriptos en los criterios de aceptacion y llama al repositorio).
-4. **Adaptador de Salida**: `PostgresEquipmentLoanRepository` (Actualización usando el método `update` de Prisma).
-5. **Adaptador de Entrada**: `EquipmentLoanController` (Ruta HTTP que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
+2. **Servicio de Dominio**: `EquipmentLoanValidator` (valida que se ingrese únicamente en status: `Returned` o `Demaged` y que previamente este en estado `Loaned`).
+3. **Adaptador de Salida**: `PostgresEquipmentLoanRepository` (Actualización usando el método `update` de Prisma).
+4. **Adaptador de Entrada**: `EquipmentLoanController` (Ruta HTTP que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
 
 ## Casos de Borde y Errores
 
 | Escenario                        | Resultado Esperado                                      | Código HTTP               |
 | -------------------------------- | ------------------------------------------------------- | ------------------------- |
-| Intento de cambiar el `status`     | Mensaje: "El esatdo es inmutable" o se ignora silenciosamente | 400 Bad Request     |
+| Intento de cambiar el `loan_date`     | Mensaje: "El esatdo es inmutable" o se ignora silenciosamente | 400 Bad Request     |
 | Prestamo inexistente              | Mensaje: "El prestamo solicitado no existe"              | 404 Not Found             |
 | Error de conexión a DB           | Mensaje: "Error interno, reintente más tarde"           | 500 Internal Server Error |
 
@@ -63,6 +59,6 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 
 1. Crear el tipo `UpdateEquipmentLoanRequest` en `@alentapp/shared` excluyendo explícitamente el campo `name`.
 2. Ampliar el `EquipmentLoanRepository` (dominio) y `PostgresEquipmentLoanRepository` (infraestructura) con el método `update`.
-3. Desarrollar `UpdateEquipmentLoanUseCase` aplicando las reglas de cambio de estado descriptas en los criterios de aceptación.
+3. Desarrollar `EquipmentLoanValidator` aplicando las validaciones correspondientes.
 4. Configurar la ruta `PUT /api/v1/equipment-loan/:id` en `EquipmentLoanController` y registrarla en `app.ts`.
 5. Consumir el endpoint desde el Frontend reutilizando el modal de creación para permitir la edición.
