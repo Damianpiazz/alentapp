@@ -7,7 +7,7 @@ fecha: 2026-05-02
 titulo: Liberación de Lockers
 -----------------------------
 
-# TDD-0004: Liberación de Lockers
+# TDD-0021: Liberación de Lockers
 
 ## Contexto de Negocio (PRD)
 
