@@ -33,11 +33,12 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 *   **Request Body** (UpdatePaymentRequest):
 ```ts
 {
+    monto?: float;
     estado?: 'Pendiente' | 'Pagado' | 'Vencido' | 'Cancelado';
     fecha_pago?: datetime;
 }
 ```
-<!-- CONSULTA: No se si el resto de atributos pueden ser modificables (monto, anio, mes, fecha venc, MEMBER?) -->
+<!-- Se definio que estos serán los unicos atributos modificables -->
 
 ### Componentes de Arquitectura Hexagonal
 
