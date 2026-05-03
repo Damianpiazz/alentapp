@@ -33,9 +33,9 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 *   **Request Body** (UpdatePaymentRequest):
 ```ts
 {
-    monto?: float;
-    estado?: 'Pendiente' | 'Pagado' | 'Vencido' | 'Cancelado';
-    fecha_pago?: datetime;
+    amount?: float;
+    status?: 'Pending' | 'Paid' | 'Overdue' | 'Canceled';
+    payment_date?: datetime;
 }
 ```
 <!-- Se definio que estos serán los unicos atributos modificables -->
@@ -43,8 +43,8 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 ### Componentes de Arquitectura Hexagonal
 
 1. **Puerto**: `PaymentRepository` (Método `update(id, data)`).
-2. **Servicio de Dominio**: `PaymentValidator` (Encargado de verificar la idempotencia revisando que el pago no esté en estado `Pagado` o `Cancelado` antes de permitir el cambio).
-3. **Caso de Uso**: `UpdatePaymentUseCase` (Orquesta la validación, asigna la `fecha_pago` actual y llama al repositorio).
+2. **Servicio de Dominio**: `PaymentValidator` (Encargado de verificar la idempotencia revisando que el pago no esté en estado `Paid` o `Canceled` antes de permitir el cambio).
+3. **Caso de Uso**: `UpdatePaymentUseCase` (Orquesta la validación, asigna la `payment_date` actual y llama al repositorio).
 4. **Adaptador de Salida**: `PostgresPaymentRepository` (Actualización usando el método `update` de Prisma).
 5. **Adaptador de Entrada**: `PaymentController` (Ruta HTTP que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
 
@@ -52,8 +52,8 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 | Escenario                   | Resultado Esperado                                   | Código HTTP               |
 | ----------------------------| ---------------------------------------------        | ------------------------- |
 | Pago inexistente            | Mensaje: "El pago no existe"                         | 400 Bad Request           |
-| El pago ya está "Pagado"    | Mensaje: "El pago ya se encuentra procesado"         | 409 Conflict              |
-| El pago está "Cancelado"    | Mensaje: "No se puede cobrar un pago que fue anulado"| 409 Conflict              |
+| El pago ya está "Paid"      | Mensaje: "El pago ya se encuentra procesado"         | 409 Conflict              |
+| El pago está "Canceled"     | Mensaje: "No se puede cobrar un pago que fue anulado"| 409 Conflict              |
 | Error de conexión a DB      | Mensaje: "Error interno, reintente más tarde"        | 500 Internal Server Error |
 
 ## Plan de Implementación
