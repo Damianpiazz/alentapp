@@ -25,6 +25,7 @@ Permitir el registro de préstamos de equipos a los socios de categoria "Senior"
 - El sistema debe validar que el socio no sea de categoria "Cadete".
 - El sistema debe validar que el nombre del item (`item_name`) no este vacío y exista.
 - El prestamo debe quedar guardado con status "Loaned" por defecto.
+- El sistema debe validar que la fecha de devolución (`due_date`) sea estrictamente posterior a la fecha actual/de creación.
 
 
 ## Diseño Técnico (RFC)
@@ -58,7 +59,7 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición de cr
 ### Componentes de Arquitectura Hexagonal
 
 1. **Puerto**: `EquipmentLoanRepository` (Interfaz en el Dominio)
-2. **Servicio de Dominio**: `EquipmentLoanValidator` (recupera el socio con una funcion del DB persistence adapter del socio, y verifica que no sea de categoria "Cadete").
+2. **Servicio de Dominio**: `EquipmentLoanValidator` (valida las reglas de negocio, verificando que el socio provisto no sea de categoría "Cadete").
 3. **Caso de Uso**: `CreateEquipmentLoanUseCase` (orquesta validación de datos y persistencia).
 4. **Adaptador de Salida**: `PostgresEquipmentLoanRepository` (Prisma).
 5. **Adaptador de Entrada**: `EquipmentLoanController` (ruta HTTP).
@@ -67,11 +68,12 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición de cr
 
 | Escenario                  | Resultado Esperado                            | Código HTTP               |
 | -------------------------- | --------------------------------------------- | ------------------------- |
-| `member_id` vacío o no encontrado          | Mensaje: "Socio no encontrado"   | 409 Conflict              |
+| `member_id` vacío o no encontrado          | Mensaje: "Socio no encontrado"   | 404 Not Found              |
 | Socio de tipo "Cadete" | Mensaje: "Los cadetes no estan habilidatos a solicitar prétamos" (Regla de negocio) | 400 Bad Request           |
 | Error de conexión a DB     | Mensaje: "Error interno, reintente más tarde" | 500 Internal Server Error |
-| `item_name` vacío o no encontrado   | Mensaje: "Equipo no encontrado"  | 409 Conflict               |
+| `item_name` vacío o no encontrado   | Mensaje: "Equipo no encontrado"  | 404 Not Found               |
 | Socio categoria "Senior"     | Crear Prestamo (Regla de negocio)  | 201 Created               |
+| `due_date` es una fecha en el pasado     | Mensaje: "La fecha de devolución debe ser futura"  |  400 Bad Request               |
 
 ## Plan de Implementación
 
