@@ -51,7 +51,7 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 
 | Escenario                        | Resultado Esperado                                      | Código HTTP               |
 | -------------------------------- | ------------------------------------------------------- | ------------------------- |
-| Intento de cambiar el `loan_date`     | Mensaje: "El esatdo es inmutable" o se ignora silenciosamente | 400 Bad Request     |
+| Intento de cambiar el `loan_date`     | Mensaje: "El estado es inmutable" o se ignora silenciosamente | 400 Bad Request     |
 | Prestamo inexistente              | Mensaje: "El prestamo solicitado no existe"              | 404 Not Found             |
 | Error de conexión a DB           | Mensaje: "Error interno, reintente más tarde"           | 500 Internal Server Error |
 
