@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Hook pre-commit para formatear solo archivos staged con Prettier
+
+npx lint-staged

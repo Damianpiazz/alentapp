@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Hook de commit-msg para validar commits con commitlint
+# Evita commits que no sigan Conventional Commits
+
+npx --no-install commitlint --edit "$1"
