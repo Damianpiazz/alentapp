@@ -12,18 +12,18 @@ titulo: Registro de Nuevos Deportes
 
 ### Objetivo
 
-Permitir a los administradores del club registrar nuevas disciplinas deportivas en el sistema para que posteriormente los socios puedan inscribirse en ellas.
+Permitir a los administradores del club registrar nuevas disciplinas deportivas en el sistema para que, posteriormente, los socios puedan inscribirse en ellas.
 
 ### User Persona
 
 - Nombre: Alberto (Administrativo / Coordinador Deportivo).
-- Necesidad: Necesita dar de alta nuevos deportes que se empezarán a dictar en el club de forma rápida, especificando si tienen costo extra, restricciones médicas y cupos.
+- Necesidad: Dar de alta nuevos deportes que se empezarán a dictar en el club de forma rápida, especificando si tienen costo extra, restricciones médicas y cupos.
 
 ### Criterios de Aceptación
 
 - El sistema debe validar que la capacidad máxima (`max_capacity`) sea mayor a cero.
 - El sistema debe validar que el nombre del deporte (`name`) sea único.
-- El deporte se debe crear correctamente con sus precios adicionales y requerimientos de apto médico.
+- El deporte debe crearse correctamente con sus precios adicionales y requerimientos de apto médico.
 
 ## Diseño Técnico (RFC)
 
@@ -57,7 +57,7 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición de cr
 
 ### Componentes de Arquitectura Hexagonal
 
-1. **Puerto**: `SportRepository`.
+1. **Puerto**: `SportRepository` (Interface en el Dominio).
 2. **Servicio de Dominio**: `SportValidator` (asegura `max_capacity > 0` y normaliza datos).
 3. **Caso de Uso**: `CreateSportUseCase` (orquesta validación y persistencia).
 4. **Adaptador de Salida**: `PostgresSportRepository` (Prisma).
@@ -65,23 +65,23 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición de cr
 
 ## Casos de Borde y Errores
 
-| Escenario                                | Resultado Esperado                                                         | Código HTTP               |
-| ---------------------------------------- | -------------------------------------------------------------------------- | ------------------------- |
-| ID generado inválido                     | Mensaje: "No se pudo generar identificador válido"                         | 500 Internal Server Error |
-| Nombre vacío                             | Mensaje: "El nombre del deporte es obligatorio"                            | 400 Bad Request           |
-| Nombre con solo espacios                 | Mensaje: "El nombre del deporte es inválido"                               | 400 Bad Request           |
-| Nombre demasiado extenso                 | Mensaje: "El nombre excede el máximo permitido"                            | 400 Bad Request           |
-| Nombre de deporte duplicado              | Mensaje: "Ya existe un deporte con ese nombre"                             | 409 Conflict              |
-| `description` vacía                      | Mensaje: "La descripción es obligatoria"                                   | 400 Bad Request           |
-| `description` demasiado extensa          | Mensaje: "La descripción excede el máximo permitido"                       | 400 Bad Request           |
-| `max_capacity` faltante                  | Mensaje: "La capacidad máxima es obligatoria"                              | 400 Bad Request           |
-| `max_capacity` <= 0                      | Mensaje: "La capacidad máxima debe ser mayor a cero"                       | 400 Bad Request           |
-| `max_capacity` no numérico               | Mensaje: "La capacidad máxima debe ser numérica"                           | 400 Bad Request           |
-| `additional_price` negativo              | Mensaje: "El precio adicional no puede ser negativo"                       | 400 Bad Request           |
-| `additional_price` no numérico           | Mensaje: "El precio adicional debe ser numérico"                           | 400 Bad Request           |
-| Payload mal formado                      | Mensaje: "Solicitud inválida"                                              | 400 Bad Request           |
-| Error de conexión a DB                   | Mensaje: "Error interno, reintente más tarde"                              | 500 Internal Server Error |
-| Creación exitosa                         | Retorna deporte creado                                                     | 201 Created               |
+| Escenario                       | Resultado Esperado                                  | Código HTTP               |
+| ------------------------------- | --------------------------------------------------- | ------------------------- |
+| ID generado inválido            | Mensaje: "No se pudo generar un identificador válido" | 500 Internal Server Error |
+| Nombre vacío                    | Mensaje: "El nombre del deporte es obligatorio"     | 400 Bad Request           |
+| Nombre con solo espacios        | Mensaje: "El nombre del deporte es inválido"        | 400 Bad Request           |
+| Nombre demasiado extenso        | Mensaje: "El nombre excede el máximo permitido"     | 400 Bad Request           |
+| Nombre de deporte duplicado     | Mensaje: "Ya existe un deporte con ese nombre"      | 409 Conflict              |
+| `description` vacía             | Mensaje: "La descripción es obligatoria"            | 400 Bad Request           |
+| `description` demasiado extensa | Mensaje: "La descripción excede el máximo permitido" | 400 Bad Request          |
+| `max_capacity` faltante         | Mensaje: "La capacidad máxima es obligatoria"       | 400 Bad Request           |
+| `max_capacity` <= 0             | Mensaje: "La capacidad máxima debe ser mayor a cero" | 400 Bad Request          |
+| `max_capacity` no numérico      | Mensaje: "La capacidad máxima debe ser numérica"    | 400 Bad Request           |
+| `additional_price` negativo     | Mensaje: "El precio adicional no puede ser negativo" | 400 Bad Request          |
+| `additional_price` no numérico  | Mensaje: "El precio adicional debe ser numérico"    | 400 Bad Request           |
+| Payload mal formado             | Mensaje: "Solicitud inválida"                       | 400 Bad Request           |
+| Error de conexión a DB          | Mensaje: "Error interno, reintente más tarde"       | 500 Internal Server Error |
+| Creación exitosa                | Retorna el deporte creado                           | 201 Created               |
 
 ## Plan de Implementación
 
@@ -90,4 +90,4 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición de cr
 3. Crear `SportRepository` y `SportValidator`.
 4. Implementar `CreateSportUseCase`.
 5. Construir `PostgresSportRepository`.
-6. Exponer endpoint en `SportController`.
+6. Exponer el endpoint en `SportController`.
