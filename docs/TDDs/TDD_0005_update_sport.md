@@ -12,7 +12,7 @@ titulo: Actualización de Deportes Existentes
 
 ### Objetivo
 
-Permitir la actualización de la información de un deporte, como su descripción, precio o cupo, manteniendo la integridad del nombre original de la disciplina como campo inmutable.
+Permitir la actualización de la información de un deporte, como su descripción, precio o cupo, manteniendo el nombre original de la disciplina como campo inmutable.
 
 ### User Persona
 
@@ -37,34 +37,34 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 
 ```ts
 {
-    description?: string;
-    max_capacity?: number;
-    additional_price?: number;
-    requires_medical_certificate?: boolean;
+  description?: string;
+  max_capacity?: number;
+  additional_price?: number;
+  requires_medical_certificate?: boolean;
 }
 ```
 
 ### Componentes de Arquitectura Hexagonal
 
 1. **Puerto**: `SportRepository` (Método `update(id, data)`).
-2. **Servicio de Dominio**: `SportValidator` (Reutiliza la validación de `max_capacity` > 0 y descarta el atributo `name` si viniera en el payload).
-3. **Caso de Uso**: `UpdateSportUseCase` (Orquesta la validación, aplica la regla de inmutabilidad del nombre y llama al repositorio).
-4. **Adaptador de Salida**: `PostgresSportRepository` (Actualización usando el método `update` de Prisma).
-5. **Adaptador de Entrada**: `SportController` (Ruta HTTP que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
+2. **Servicio de Dominio**: `SportValidator` (reutiliza la validación de `max_capacity > 0` y descarta el atributo `name` si viniera en el payload).
+3. **Caso de Uso**: `UpdateSportUseCase` (orquesta la validación, aplica la regla de inmutabilidad del nombre y llama al repositorio).
+4. **Adaptador de Salida**: `PostgresSportRepository` (actualización usando el método `update` de Prisma).
+5. **Adaptador de Entrada**: `SportController` (ruta HTTP que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
 
 ## Casos de Borde y Errores
 
-| Escenario                        | Resultado Esperado                                      | Código HTTP               |
-| -------------------------------- | ------------------------------------------------------- | ------------------------- |
-| Intento de cambiar el `name`     | Mensaje: "El nombre es inmutable" o se ignora silenciosamente | 400 Bad Request     |
-| `max_capacity` enviado <= 0      | Mensaje: "La capacidad máxima debe ser mayor a cero"    | 400 Bad Request           |
-| Deporte inexistente              | Mensaje: "El deporte solicitado no existe"              | 404 Not Found             |
-| Error de conexión a DB           | Mensaje: "Error interno, reintente más tarde"           | 500 Internal Server Error |
+| Escenario                    | Resultado Esperado                                                     | Código HTTP               |
+| ---------------------------- | ---------------------------------------------------------------------- | ------------------------- |
+| Intento de cambiar el `name` | Mensaje: "El nombre es inmutable" o se ignora silenciosamente          | 400 Bad Request           |
+| `max_capacity` enviado <= 0  | Mensaje: "La capacidad máxima debe ser mayor a cero"                   | 400 Bad Request           |
+| Deporte inexistente          | Mensaje: "El deporte solicitado no existe"                             | 404 Not Found             |
+| Error de conexión a DB       | Mensaje: "Error interno, reintente más tarde"                          | 500 Internal Server Error |
 
 ## Plan de Implementación
 
-1. Crear el tipo `UpdateSportRequest` en `@alentapp/shared` excluyendo explícitamente el campo `name`.
+1. Actualizar las interfaces en el paquete `@alentapp/shared` (`UpdateSportRequest`).
 2. Ampliar el `SportRepository` (dominio) y `PostgresSportRepository` (infraestructura) con el método `update`.
-3. Desarrollar `UpdateSportUseCase` aplicando la regla de inmutabilidad del nombre y la validación de capacidad mediante `SportValidator`.
+3. Implementar `UpdateSportUseCase` aplicando la regla de inmutabilidad del nombre y la validación de capacidad mediante `SportValidator`.
 4. Configurar la ruta `PUT /api/v1/sports/:id` en `SportController` y registrarla en `app.ts`.
-5. Consumir el endpoint desde el Frontend reutilizando el modal de creación para permitir la edición.
+5. Consumir el endpoint desde el frontend reutilizando el modal de creación para permitir la edición.
