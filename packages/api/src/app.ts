@@ -7,17 +7,25 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
+import { SportValidator } from './domain/services/SportValidator.js';
+import { CreateSportUseCase } from './application/CreateSportUseCase.js';
+import { SportController } from './delivery/SportController.js';
 
 export function buildApp() {
     const server = Fastify({
         logger: {
             level: 'info',
-            transport: process.env.NODE_ENV === 'development' 
-            ? {
-                target: 'pino-pretty',
-                options: { translateTime: 'HH:MM:ss Z', ignore: 'pid,hostname' },
-                } 
-            : undefined,
+            transport:
+                process.env.NODE_ENV === 'development'
+                    ? {
+                          target: 'pino-pretty',
+                          options: {
+                              translateTime: 'HH:MM:ss Z',
+                              ignore: 'pid,hostname',
+                          },
+                      }
+                    : undefined,
         },
     });
 
@@ -30,26 +38,56 @@ export function buildApp() {
 
     const memberRepo = new PostgresMemberRepository();
     const memberValidator = new MemberValidator(memberRepo);
-    
-    const createMemberUseCase = new CreateMemberUseCase(memberRepo, memberValidator);
+
+    const createMemberUseCase = new CreateMemberUseCase(
+        memberRepo,
+        memberValidator,
+    );
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
-    const updateMemberUseCase = new UpdateMemberUseCase(memberRepo, memberValidator);
+    const updateMemberUseCase = new UpdateMemberUseCase(
+        memberRepo,
+        memberValidator,
+    );
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
 
     const memberController = new MemberController(
-        createMemberUseCase, 
+        createMemberUseCase,
         getMembersUseCase,
         updateMemberUseCase,
-        deleteMemberUseCase
+        deleteMemberUseCase,
     );
 
-    server.get('/api/v1/socios', memberController.getAll.bind(memberController));
-    server.post('/api/v1/socios', memberController.create.bind(memberController));
-    server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
-    server.delete('/api/v1/socios/:id', memberController.delete.bind(memberController));
+    server.get(
+        '/api/v1/socios',
+        memberController.getAll.bind(memberController),
+    );
+    server.post(
+        '/api/v1/socios',
+        memberController.create.bind(memberController),
+    );
+    server.put(
+        '/api/v1/socios/:id',
+        memberController.update.bind(memberController),
+    );
+    server.delete(
+        '/api/v1/socios/:id',
+        memberController.delete.bind(memberController),
+    );
+
+    const sportRepo = new PostgresSportRepository();
+    const sportValidator = new SportValidator(sportRepo);
+
+    const createSportUseCase = new CreateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
+
+    const sportController = new SportController(createSportUseCase);
+
+    server.post('/api/v1/sports', sportController.create.bind(sportController));
 
     server.get('/', async (req, rep) => {
-        rep.status(200).send({ msg: 'asd' })
+        rep.status(200).send({ msg: 'asd' });
     });
 
     return server;
@@ -61,7 +99,7 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
     const port = parseInt(process.env.PORT || '3000', 10);
 
     server.listen({ port, host: '0.0.0.0' }, () =>
-        server.log.info(`API server running on http://localhost:${port}`)
+        server.log.info(`API server running on http://localhost:${port}`),
     );
 
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
