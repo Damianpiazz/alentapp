@@ -19,7 +19,6 @@ import { membersService } from '../services/members';
 import type {
     DisciplineDTO,
     CreateDisciplineRequest,
-    UpdateDisciplineRequest,
     MemberDTO,
 } from '@alentapp/shared';
 import {
@@ -108,14 +107,18 @@ export function DisciplinesView() {
         setIsSubmitting(true);
         try {
             if (editingDisciplineId) {
+                const updateData = {
+                    reason: formData.reason,
+                    start_date: formData.start_date,
+                    end_date: formData.end_date,
+                    is_total_suspension: formData.is_total_suspension,
+                };
                 await disciplinesService.update(
                     editingDisciplineId,
-                    formData as UpdateDisciplineRequest,
+                    updateData,
                 );
             } else {
-                await disciplinesService.create(
-                    formData as CreateDisciplineRequest,
-                );
+                await disciplinesService.create(formData);
             }
             setIsDialogOpen(false);
             await fetchDisciplines();
