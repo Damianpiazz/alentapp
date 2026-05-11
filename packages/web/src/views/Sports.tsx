@@ -11,11 +11,16 @@ import {
     Center,
     Input,
     Textarea,
+    IconButton,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw } from 'react-icons/lu';
+import { LuPlus, LuPencil, LuRefreshCw } from 'react-icons/lu';
 import { useEffect, useState, useCallback } from 'react';
 import { sportsService } from '../services/sports';
-import type { SportDTO, CreateSportRequest } from '@alentapp/shared';
+import type {
+    SportDTO,
+    CreateSportRequest,
+    UpdateSportRequest,
+} from '@alentapp/shared';
 
 import {
     DialogRoot,
@@ -54,6 +59,8 @@ export function SportsView() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [editingSportId, setEditingSportId] = useState<string | null>(null);
+
     const [formData, setFormData] = useState<CreateSportRequest>({
         name: '',
         description: '',
@@ -81,6 +88,8 @@ export function SportsView() {
     }, []);
 
     const openCreateModal = () => {
+        setEditingSportId(null);
+
         setFormData({
             name: '',
             description: '',
@@ -92,13 +101,39 @@ export function SportsView() {
         setIsDialogOpen(true);
     };
 
+    const openEditModal = (sport: SportDTO) => {
+        setEditingSportId(sport.id);
+
+        setFormData({
+            name: sport.name,
+            description: sport.description,
+            max_capacity: sport.max_capacity,
+            additional_price: sport.additional_price,
+            requires_medical_certificate: sport.requires_medical_certificate,
+        });
+
+        setIsDialogOpen(true);
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         setIsSubmitting(true);
 
         try {
-            await sportsService.create(formData);
+            if (editingSportId) {
+                const updateData: UpdateSportRequest = {
+                    description: formData.description,
+                    max_capacity: formData.max_capacity,
+                    additional_price: formData.additional_price,
+                    requires_medical_certificate:
+                        formData.requires_medical_certificate,
+                };
+
+                await sportsService.update(editingSportId, updateData);
+            } else {
+                await sportsService.create(formData);
+            }
 
             setIsDialogOpen(false);
 
@@ -163,12 +198,19 @@ export function SportsView() {
                 <DialogContent>
                     <form onSubmit={handleSubmit}>
                         <DialogHeader>
-                            <DialogTitle>Agregar Nuevo Deporte</DialogTitle>
+                            <DialogTitle>
+                                {editingSportId
+                                    ? 'Editar Deporte'
+                                    : 'Agregar Nuevo Deporte'}
+                            </DialogTitle>
                         </DialogHeader>
 
                         <DialogBody>
                             <Stack gap="4">
-                                <Field label="Nombre" required>
+                                <Field
+                                    label="Nombre"
+                                    required={!editingSportId}
+                                >
                                     <Input
                                         placeholder="Ej. Fútbol"
                                         value={formData.name}
@@ -178,11 +220,25 @@ export function SportsView() {
                                                 name: e.target.value,
                                             })
                                         }
-                                        required
+                                        required={!editingSportId}
+                                        disabled={!!editingSportId}
                                     />
+
+                                    {editingSportId && (
+                                        <Text
+                                            fontSize="xs"
+                                            color="fg.muted"
+                                            mt="1"
+                                        >
+                                            El nombre no se puede modificar
+                                        </Text>
+                                    )}
                                 </Field>
 
-                                <Field label="Descripción" required>
+                                <Field
+                                    label="Descripción"
+                                    required={!editingSportId}
+                                >
                                     <Textarea
                                         placeholder="Ej. Deporte colectivo de 11 jugadores"
                                         value={formData.description}
@@ -192,11 +248,14 @@ export function SportsView() {
                                                 description: e.target.value,
                                             })
                                         }
-                                        required
+                                        required={!editingSportId}
                                     />
                                 </Field>
 
-                                <Field label="Capacidad Máxima" required>
+                                <Field
+                                    label="Capacidad Máxima"
+                                    required={!editingSportId}
+                                >
                                     <Input
                                         type="number"
                                         min="1"
@@ -212,7 +271,7 @@ export function SportsView() {
                                                     ) || 0,
                                             })
                                         }
-                                        required
+                                        required={!editingSportId}
                                     />
                                 </Field>
 
@@ -280,7 +339,9 @@ export function SportsView() {
                                 colorPalette="blue"
                                 loading={isSubmitting}
                             >
-                                Crear Deporte
+                                {editingSportId
+                                    ? 'Guardar Cambios'
+                                    : 'Crear Deporte'}
                             </Button>
                         </DialogFooter>
 
@@ -356,6 +417,10 @@ export function SportsView() {
                                     <Table.ColumnHeader py="4">
                                         Cert. Médico
                                     </Table.ColumnHeader>
+
+                                    <Table.ColumnHeader py="4" textAlign="end">
+                                        Acciones
+                                    </Table.ColumnHeader>
                                 </Table.Row>
                             </Table.Header>
 
@@ -419,6 +484,19 @@ export function SportsView() {
                                                     ? 'Sí'
                                                     : 'No'}
                                             </Box>
+                                        </Table.Cell>
+
+                                        <Table.Cell textAlign="end">
+                                            <IconButton
+                                                variant="ghost"
+                                                size="sm"
+                                                aria-label="Editar deporte"
+                                                onClick={() =>
+                                                    openEditModal(sport)
+                                                }
+                                            >
+                                                <LuPencil />
+                                            </IconButton>
                                         </Table.Cell>
                                     </Table.Row>
                                 ))}
