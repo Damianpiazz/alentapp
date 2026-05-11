@@ -6,15 +6,12 @@ import {
     CreateSportRequest,
     UpdateSportRequest,
 } from '@alentapp/shared';
-
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
 }
-
 const prisma = new PrismaClient({
     adapter: new PrismaPg(process.env.DATABASE_URL),
 });
-
 type DBSport = {
     id: string;
     name: string;
@@ -23,8 +20,8 @@ type DBSport = {
     additional_price: Prisma.Decimal;
     requires_medical_certificate: boolean;
     created_at: Date;
+    deleted_at: Date | null;
 };
-
 export class PostgresSportRepository implements SportRepository {
     async create(data: CreateSportRequest): Promise<SportDTO> {
         const sport = await prisma.sport.create({
@@ -36,40 +33,27 @@ export class PostgresSportRepository implements SportRepository {
                 requires_medical_certificate: data.requires_medical_certificate,
             },
         });
-
         return this.mapToDTO(sport);
     }
-
     async findById(id: string): Promise<SportDTO | null> {
-        const sport = await prisma.sport.findUnique({
-            where: { id },
+        const sport = await prisma.sport.findFirst({
+            where: { id, deleted_at: null },
         });
-
         return sport ? this.mapToDTO(sport) : null;
     }
-
     async findByName(name: string): Promise<SportDTO | null> {
-        const sport = await prisma.sport.findUnique({
-            where: { name },
+        const sport = await prisma.sport.findFirst({
+            where: { name, deleted_at: null },
         });
-
         return sport ? this.mapToDTO(sport) : null;
     }
-
     async findAll(): Promise<SportDTO[]> {
         const sports = await prisma.sport.findMany({
+            where: { deleted_at: null },
             orderBy: { created_at: 'desc' },
         });
-
         return sports.map((sport) => this.mapToDTO(sport));
     }
-
-    async delete(id: string): Promise<void> {
-        await prisma.sport.delete({
-            where: { id },
-        });
-    }
-
     async update(id: string, data: UpdateSportRequest): Promise<SportDTO> {
         const sport = await prisma.sport.update({
             where: { id },
@@ -91,7 +75,12 @@ export class PostgresSportRepository implements SportRepository {
         });
         return this.mapToDTO(sport);
     }
-
+    async delete(id: string): Promise<void> {
+        await prisma.sport.update({
+            where: { id },
+            data: { deleted_at: new Date() },
+        });
+    }
     private mapToDTO(sport: DBSport): SportDTO {
         return {
             id: sport.id,
@@ -101,6 +90,7 @@ export class PostgresSportRepository implements SportRepository {
             additional_price: sport.additional_price.toNumber(),
             requires_medical_certificate: sport.requires_medical_certificate,
             created_at: sport.created_at.toISOString(),
+            deleted_at: sport.deleted_at?.toISOString() ?? null,
         };
     }
 }
