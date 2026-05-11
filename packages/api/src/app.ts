@@ -11,6 +11,7 @@ import { PostgresSportRepository } from './infrastructure/PostgresSportRepositor
 import { SportValidator } from './domain/services/SportValidator.js';
 import { CreateSportUseCase } from './application/CreateSportUseCase.js';
 import { UpdateSportUseCase } from './application/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from './application/DeleteSportUseCase.js';
 import { SportController } from './delivery/SportController.js';
 
 export function buildApp() {
@@ -88,15 +89,23 @@ export function buildApp() {
         sportValidator,
     );
 
+    const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
+
     const sportController = new SportController(
         createSportUseCase,
         updateSportUseCase,
+        deleteSportUseCase,
     );
-
     server.post('/api/v1/sports', sportController.create.bind(sportController));
+
     server.put(
         '/api/v1/sports/:id',
         sportController.update.bind(sportController),
+    );
+
+    server.delete(
+        '/api/v1/sports/:id',
+        sportController.delete.bind(sportController),
     );
 
     server.get('/', async (req, rep) => {

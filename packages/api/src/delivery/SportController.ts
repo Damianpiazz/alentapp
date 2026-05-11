@@ -1,11 +1,13 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CreateSportUseCase } from '../application/CreateSportUseCase.js';
 import { UpdateSportUseCase } from '../application/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from '../application/DeleteSportUseCase.js';
 import { CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
 export class SportController {
     constructor(
         private readonly createSportUseCase: CreateSportUseCase,
         private readonly updateSportUseCase: UpdateSportUseCase,
+        private readonly deleteSportUseCase: DeleteSportUseCase,
     ) {}
     async create(
         request: FastifyRequest<{ Body: CreateSportRequest }>,
@@ -60,6 +62,26 @@ export class SportController {
                 error.message.includes('numérica') ||
                 error.message.includes('negativo')
             ) {
+                return reply.status(400).send({ error: error.message });
+            }
+            return reply.status(500).send({
+                error: 'Error interno, reintente más tarde',
+            });
+        }
+    }
+    async delete(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            await this.deleteSportUseCase.execute(id);
+            return reply.status(204).send();
+        } catch (error: any) {
+            if (error.message.includes('no existe')) {
+                return reply.status(404).send({ error: error.message });
+            }
+            if (error.message.includes('inválido')) {
                 return reply.status(400).send({ error: error.message });
             }
             return reply.status(500).send({
