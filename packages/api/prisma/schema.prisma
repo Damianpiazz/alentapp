@@ -49,5 +49,7 @@ model Discipline {
 
     member Member @relation(fields: [member_id], references: [id])
 
+    @@index([member_id])
+    
     @@map("disciplines")
 }
