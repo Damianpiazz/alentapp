@@ -7,6 +7,7 @@ import {
     CreateDisciplineRequest,
     UpdateDisciplineRequest,
 } from '@alentapp/shared';
+import { ValidationError, NotFoundError } from '../domain/errors.js';
 
 export class DisciplineController {
     constructor(
@@ -21,7 +22,9 @@ export class DisciplineController {
             const disciplines = await this.getDisciplinesUseCase.execute();
             return reply.status(200).send({ data: disciplines });
         } catch (error: any) {
-            return reply.status(500).send({ error: error.message });
+            return reply
+                .status(500)
+                .send({ error: 'Error interno, reintente más tarde' });
         }
     }
 
@@ -35,14 +38,10 @@ export class DisciplineController {
             );
             return reply.status(201).send({ data: discipline });
         } catch (error: any) {
-            if (error.message.includes('El socio indicado no existe')) {
+            if (error instanceof NotFoundError) {
                 return reply.status(404).send({ error: error.message });
             }
-            if (
-                error.message.includes('posterior') ||
-                error.message.includes('obligatorios') ||
-                error.message.includes('inválido')
-            ) {
+            if (error instanceof ValidationError) {
                 return reply.status(400).send({ error: error.message });
             }
             return reply
@@ -66,10 +65,10 @@ export class DisciplineController {
             );
             return reply.status(200).send({ data: discipline });
         } catch (error: any) {
-            if (error.message.includes('no existe')) {
+            if (error instanceof NotFoundError) {
                 return reply.status(404).send({ error: error.message });
             }
-            if (error.message.includes('posterior')) {
+            if (error instanceof ValidationError) {
                 return reply.status(400).send({ error: error.message });
             }
             return reply
@@ -87,7 +86,7 @@ export class DisciplineController {
             await this.deleteDisciplineUseCase.execute(id);
             return reply.status(204).send();
         } catch (error: any) {
-            if (error.message.includes('no existe')) {
+            if (error instanceof NotFoundError) {
                 return reply.status(404).send({ error: error.message });
             }
             return reply
