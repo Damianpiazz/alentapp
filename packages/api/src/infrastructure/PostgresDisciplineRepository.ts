@@ -1,11 +1,12 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
+import { PrismaClient, Prisma } from '../generated/client/client.js';
 import { DisciplineRepository } from '../domain/DisciplineRepository.js';
 import {
     DisciplineDTO,
     CreateDisciplineRequest,
     UpdateDisciplineRequest,
 } from '@alentapp/shared';
+import { NotFoundError } from '../domain/errors.js';
 
 const prisma = new PrismaClient({
     adapter: new PrismaPg(process.env.DATABASE_URL!),
@@ -70,9 +71,19 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
     }
 
     async delete(id: string): Promise<void> {
-        await prisma.discipline.delete({
-            where: { id },
-        });
+        try {
+            await prisma.discipline.delete({
+                where: { id },
+            });
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2025'
+            ) {
+                throw new NotFoundError('La sanción indicada no existe');
+            }
+            throw error;
+        }
     }
 
     async existsMember(memberId: string): Promise<boolean> {
