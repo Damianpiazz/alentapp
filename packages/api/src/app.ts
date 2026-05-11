@@ -13,6 +13,7 @@ import { GetDisciplinesUseCase } from './application/GetDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from './application/UpdateDisciplineUseCase.js';
 import { DeleteDisciplineUseCase } from './application/DeleteDisciplineUseCase.js';
 import { DisciplineController } from './delivery/DisciplineController.js';
+import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -78,10 +79,24 @@ export function buildApp() {
 
     // Discipline
     const disciplineRepo = new PostgresDisciplineRepository();
-    const createDisciplineUseCase = new CreateDisciplineUseCase(disciplineRepo);
+    const disciplineValidator = new DisciplineValidator(disciplineRepo);
+
+    const createDisciplineUseCase = new CreateDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
     const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
-    const updateDisciplineUseCase = new UpdateDisciplineUseCase(disciplineRepo);
-    const deleteDisciplineUseCase = new DeleteDisciplineUseCase(disciplineRepo);
+
+    const updateDisciplineUseCase = new UpdateDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
+    const deleteDisciplineUseCase = new DeleteDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
 
     const disciplineController = new DisciplineController(
         createDisciplineUseCase,

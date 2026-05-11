@@ -38,6 +38,7 @@ export class DisciplineController {
             );
             return reply.status(201).send({ data: discipline });
         } catch (error: any) {
+            console.error('Error al crear disciplina:', error);
             if (error instanceof NotFoundError) {
                 return reply.status(404).send({ error: error.message });
             }
@@ -65,6 +66,7 @@ export class DisciplineController {
             );
             return reply.status(200).send({ data: discipline });
         } catch (error: any) {
+            console.error('Error al actualizar disciplina:', error);
             if (error instanceof NotFoundError) {
                 return reply.status(404).send({ error: error.message });
             }
@@ -86,6 +88,7 @@ export class DisciplineController {
             await this.deleteDisciplineUseCase.execute(id);
             return reply.status(204).send();
         } catch (error: any) {
+            console.error('Error al eliminar disciplina:', error);
             if (error instanceof NotFoundError) {
                 return reply.status(404).send({ error: error.message });
             }

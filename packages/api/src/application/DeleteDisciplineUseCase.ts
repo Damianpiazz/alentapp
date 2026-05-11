@@ -9,7 +9,7 @@ export class DeleteDisciplineUseCase {
 
     async execute(id: string): Promise<void> {
         // 1. Verificar que la sanción existe
-        this.disciplineValidator.validateDisciplineExists(id);
+        await this.disciplineValidator.validateDisciplineExists(id);
 
         // 2. Eliminar
         await this.disciplineRepository.delete(id);
