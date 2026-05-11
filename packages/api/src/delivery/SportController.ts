@@ -1,14 +1,25 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { GetSportsUseCase } from '../application/GetSportsUseCase.js';
 import { CreateSportUseCase } from '../application/CreateSportUseCase.js';
 import { UpdateSportUseCase } from '../application/UpdateSportUseCase.js';
 import { DeleteSportUseCase } from '../application/DeleteSportUseCase.js';
 import { CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
+
 export class SportController {
     constructor(
+        private readonly getSportsUseCase: GetSportsUseCase,
         private readonly createSportUseCase: CreateSportUseCase,
         private readonly updateSportUseCase: UpdateSportUseCase,
         private readonly deleteSportUseCase: DeleteSportUseCase,
     ) {}
+    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const sports = await this.getSportsUseCase.execute();
+            return reply.status(200).send({ data: sports });
+        } catch (error: any) {
+            return reply.status(500).send({ error: error.message });
+        }
+    }
     async create(
         request: FastifyRequest<{ Body: CreateSportRequest }>,
         reply: FastifyReply,
