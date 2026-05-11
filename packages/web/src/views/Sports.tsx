@@ -13,7 +13,7 @@ import {
     Textarea,
     IconButton,
 } from '@chakra-ui/react';
-import { LuPlus, LuPencil, LuRefreshCw } from 'react-icons/lu';
+import { LuPlus, LuPencil, LuRefreshCw, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useState, useCallback } from 'react';
 import { sportsService } from '../services/sports';
 import type {
@@ -146,6 +146,25 @@ export function SportsView() {
             }
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteSport = async (id: string, name: string) => {
+        if (
+            window.confirm(
+                `¿Estás seguro de que deseas eliminar el deporte "${name}"? Esta acción no se puede deshacer.`,
+            )
+        ) {
+            try {
+                await sportsService.delete(id);
+                await fetchSports();
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    alert(err.message);
+                } else {
+                    alert('Error al eliminar el deporte');
+                }
+            }
         }
     };
 
@@ -496,6 +515,20 @@ export function SportsView() {
                                                 }
                                             >
                                                 <LuPencil />
+                                            </IconButton>
+                                            <IconButton
+                                                variant="ghost"
+                                                size="sm"
+                                                colorPalette="red"
+                                                aria-label="Eliminar deporte"
+                                                onClick={() =>
+                                                    handleDeleteSport(
+                                                        sport.id,
+                                                        sport.name,
+                                                    )
+                                                }
+                                            >
+                                                <LuTrash2 />
                                             </IconButton>
                                         </Table.Cell>
                                     </Table.Row>
