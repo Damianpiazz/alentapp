@@ -33,15 +33,15 @@ export interface UpdateMemberRequest {
 }
 
 export interface SportDTO {
-    id: string; // UUID
+    id: string;
     name: string;
     description: string;
     max_capacity: number;
     additional_price: number;
     requires_medical_certificate: boolean;
-    created_at: string; // ISO Date String
+    created_at: string;
+    deleted_at: string | null;
 }
-
 export interface CreateSportRequest {
     name: string;
     description: string;
@@ -49,7 +49,6 @@ export interface CreateSportRequest {
     additional_price: number;
     requires_medical_certificate: boolean;
 }
-
 export interface UpdateSportRequest {
     description?: string;
     max_capacity?: number;
