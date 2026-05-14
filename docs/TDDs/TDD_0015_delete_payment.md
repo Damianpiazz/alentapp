@@ -47,7 +47,6 @@ A fines prácticos y respetando las convenciones REST para borrados lógicos, la
 | -------------------------------- | --------------------------------------------------------------- | ---------------------- |
 | El pago con el `id` no existe    | Mensaje: "El pago no existe"                                    | 404 Not Found          |
 | El pago ya está `Paid`           | Mensaje: "No se puede anular un pago ya procesado"              | 409 Conflict           |
-| Petición usando método `DELETE`  | Mensaje: "Operación no permitida. Use el endpoint de anulación" | 405 Method Not Allowed |
 
 ## Plan de Implementación
 
