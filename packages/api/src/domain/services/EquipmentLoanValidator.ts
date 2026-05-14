@@ -15,7 +15,7 @@ export class EquipmentLoanValidator {
         }
     }
     // socio de categoria cadete no pueden solicitar prestamos
-    async validateMemberIsCadete(member_id: string): Promise<void> {
+    async validateMemberCategory(member_id: string): Promise<void> {
         const member = await this.memberRepo.findById(member_id);
         if (!member || member.category === 'Cadete') {
             throw new Error(
