@@ -11,7 +11,7 @@ export class EquipmentLoanValidator {
     async validateMemberId(member_id: string): Promise<void> {
         const member = await this.memberRepo.findById(member_id);
         if (!member) {
-            throw new Error('No existe un miembro con ese ID');
+            throw new Error('No existe un miembro con ese id');
         }
     }
     // socio de categoria cadete no pueden solicitar prestamos
@@ -19,7 +19,7 @@ export class EquipmentLoanValidator {
         const member = await this.memberRepo.findById(member_id);
         if (!member || member.category === 'Cadete') {
             throw new Error(
-                'Los miembros de categoría "Cadete" no pueden solicitar préstamos',
+                'Si el miembro es de categoría "Cadete" no pueden solicitar préstamos',
             );
         }
     }
