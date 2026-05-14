@@ -1,8 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { NewEquipmentLoanUseCase } from '../application/NewEquipmentLoanUseCase.js';
 import { CreateEquipmentLoanRequest } from '@alentapp/shared';
-import { request } from 'https';
-import { create } from 'domain';
 
 export class EquipmentLoanController {
     constructor(
@@ -17,9 +15,12 @@ export class EquipmentLoanController {
             request.log.info(
                 'Alguien pegó al endpoint de crear préstamo de equipo',
             );
-            const prestamo = await this.createEquipmentLoanUseCase.execute(
-                request.body,
-            );
+            const payload = {
+                ...request.body,
+                due_date: new Date(request.body.due_date as any),
+            };
+            const prestamo =
+                await this.createEquipmentLoanUseCase.execute(payload);
             return reply.status(201).send({ data: prestamo });
         } catch (error: any) {
             if (
