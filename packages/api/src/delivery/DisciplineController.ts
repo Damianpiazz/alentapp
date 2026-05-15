@@ -7,7 +7,6 @@ import {
     CreateDisciplineRequest,
     UpdateDisciplineRequest,
 } from '@alentapp/shared';
-import { ValidationError, NotFoundError } from '../domain/errors.js';
 
 export class DisciplineController {
     constructor(
@@ -38,11 +37,14 @@ export class DisciplineController {
             );
             return reply.status(201).send({ data: discipline });
         } catch (error: any) {
-            console.error('Error al crear disciplina:', error);
-            if (error instanceof NotFoundError) {
+            if (error.message.includes('no existe')) {
                 return reply.status(404).send({ error: error.message });
             }
-            if (error instanceof ValidationError) {
+            if (
+                error.message.includes('obligatorios') ||
+                error.message.includes('inválido') ||
+                error.message.includes('posterior')
+            ) {
                 return reply.status(400).send({ error: error.message });
             }
             return reply
@@ -66,11 +68,14 @@ export class DisciplineController {
             );
             return reply.status(200).send({ data: discipline });
         } catch (error: any) {
-            console.error('Error al actualizar disciplina:', error);
-            if (error instanceof NotFoundError) {
+            if (error.message.includes('no existe')) {
                 return reply.status(404).send({ error: error.message });
             }
-            if (error instanceof ValidationError) {
+            if (
+                error.message.includes('obligatorios') ||
+                error.message.includes('inválido') ||
+                error.message.includes('posterior')
+            ) {
                 return reply.status(400).send({ error: error.message });
             }
             return reply
@@ -88,8 +93,7 @@ export class DisciplineController {
             await this.deleteDisciplineUseCase.execute(id);
             return reply.status(204).send();
         } catch (error: any) {
-            console.error('Error al eliminar disciplina:', error);
-            if (error instanceof NotFoundError) {
+            if (error.message.includes('no existe')) {
                 return reply.status(404).send({ error: error.message });
             }
             return reply

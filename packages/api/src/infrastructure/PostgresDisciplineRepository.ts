@@ -6,7 +6,6 @@ import {
     CreateDisciplineRequest,
     UpdateDisciplineRequest,
 } from '@alentapp/shared';
-import { NotFoundError } from '../domain/errors.js';
 
 const prisma = new PrismaClient({
     adapter: new PrismaPg(process.env.DATABASE_URL!),
@@ -21,7 +20,6 @@ type DBDiscipline = {
     is_total_suspension: boolean;
     created_at: Date;
 };
-
 export class PostgresDisciplineRepository implements DisciplineRepository {
     async findAll(): Promise<DisciplineDTO[]> {
         const disciplines = await prisma.discipline.findMany({
@@ -29,6 +27,7 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
         });
         return disciplines.map(this.mapToDTO);
     }
+
     async create(data: CreateDisciplineRequest): Promise<DisciplineDTO> {
         const discipline = await prisma.discipline.create({
             data: {
@@ -39,7 +38,6 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
                 is_total_suspension: data.is_total_suspension,
             },
         });
-
         return this.mapToDTO(discipline);
     }
 
@@ -72,15 +70,13 @@ export class PostgresDisciplineRepository implements DisciplineRepository {
 
     async delete(id: string): Promise<void> {
         try {
-            await prisma.discipline.delete({
-                where: { id },
-            });
+            await prisma.discipline.delete({ where: { id } });
         } catch (error) {
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError &&
                 error.code === 'P2025'
             ) {
-                throw new NotFoundError('La sanción indicada no existe');
+                throw new Error('La sanción indicada no existe');
             }
             throw error;
         }
