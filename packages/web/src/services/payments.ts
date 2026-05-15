@@ -4,6 +4,24 @@ const API_URL =
     (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
 export const paymentsService = {
+    async getAll(): Promise<PaymentDTO[]> {
+        const response = await fetch(`${API_URL}/payments`);
+        if (!response.ok) {
+            throw new Error('Error al obtener los pagos');
+        }
+        const result = await response.json();
+        return result.data;
+    },
+
+    async getById(id: string): Promise<PaymentDTO> {
+        const response = await fetch(`${API_URL}/payments/${id}`);
+        if (!response.ok) {
+            throw new Error('Error al obtener el pago');
+        }
+        const result = await response.json();
+        return result.data;
+    },
+
     async create(data: CreatePaymentRequest): Promise<PaymentDTO> {
         const response = await fetch(`${API_URL}/payments`, {
             method: 'POST',
