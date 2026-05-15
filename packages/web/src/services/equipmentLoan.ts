@@ -31,4 +31,22 @@ export const equipmentLoanService = {
         const result = await response.json();
         return result.data;
     },
+
+    async update(id: string, status: string): Promise<EquipmentLoanDTO> {
+        const response = await fetch(`${API_URL}/prestamos/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(
+                errorData.error || 'Error al actualizar el préstamo',
+            );
+        }
+        const result = await response.json();
+        return result.data;
+    },
 };
