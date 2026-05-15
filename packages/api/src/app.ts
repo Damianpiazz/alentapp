@@ -40,15 +40,15 @@ export function buildApp() {
 
     const memberRepo = new PostgresMemberRepository();
     const memberValidator = new MemberValidator(memberRepo);
-    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
-    const equipmentLoanValidator = new EquipmentLoanValidator(
-        equipmentLoanRepo,
-        memberRepo,
-    );
 
     const createMemberUseCase = new CreateMemberUseCase(
         memberRepo,
         memberValidator,
+    );
+    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+    const equipmentLoanValidator = new EquipmentLoanValidator(
+        equipmentLoanRepo,
+        memberRepo,
     );
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
     const updateMemberUseCase = new UpdateMemberUseCase(
@@ -96,14 +96,18 @@ export function buildApp() {
         '/api/v1/socios/:id',
         memberController.delete.bind(memberController),
     );
+
     server.post(
         '/api/v1/prestamos',
         equipmentLoanController.create.bind(equipmentLoanController),
     );
-
     server.get(
         '/api/v1/prestamos',
         equipmentLoanController.getAll.bind(equipmentLoanController),
+    );
+    server.put(
+        '/api/v1/prestamos/:id',
+        equipmentLoanController.update.bind(equipmentLoanController),
     );
 
     server.get('/', async (req, rep) => {
