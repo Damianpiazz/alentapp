@@ -22,4 +22,13 @@ export const equipmentLoanService = {
         const result = await response.json();
         return result;
     },
+
+    async getAll(): Promise<EquipmentLoanDTO[]> {
+        const response = await fetch(`${API_URL}/prestamos`);
+        if (!response.ok) {
+            throw new Error('Error al obtener los préstamos');
+        }
+        const result = await response.json();
+        return result.data;
+    },
 };

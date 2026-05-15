@@ -1,11 +1,22 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { NewEquipmentLoanUseCase } from '../application/NewEquipmentLoanUseCase.js';
 import { CreateEquipmentLoanRequest } from '@alentapp/shared';
+import { GetEquipmentLoanUseCase } from '../application/GetEquipmentLoanUseCase.js';
 
 export class EquipmentLoanController {
     constructor(
         private readonly createEquipmentLoanUseCase: NewEquipmentLoanUseCase,
+        private readonly getEquipmentLoanUseCase: GetEquipmentLoanUseCase,
     ) {}
+
+    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const prestamos = await this.getEquipmentLoanUseCase.execute();
+            return reply.status(200).send({ data: prestamos });
+        } catch (error: any) {
+            return reply.status(500).send({ error: error.message });
+        }
+    }
 
     async create(
         request: FastifyRequest<{ Body: CreateEquipmentLoanRequest }>,

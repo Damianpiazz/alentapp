@@ -10,6 +10,7 @@ import { MemberController } from './delivery/MemberController.js';
 import { PostgresEquipmentLoanRepository } from './infrastructure/PostgresEquipmentLoanRepository.js';
 import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator.js';
 import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
+import { GetEquipmentLoanUseCase } from './application/GetEquipmentLoanUseCase.js';
 import { EquipmentLoanController } from './delivery/EquipmentLoanController.js';
 
 export function buildApp() {
@@ -54,6 +55,9 @@ export function buildApp() {
         memberValidator,
     );
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+    const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
+        equipmentLoanRepo,
+    );
     const newEquipmentLoanUseCase = new NewEquipmentLoanUseCase(
         equipmentLoanRepo,
         equipmentLoanValidator,
@@ -67,6 +71,7 @@ export function buildApp() {
     );
     const equipmentLoanController = new EquipmentLoanController(
         newEquipmentLoanUseCase,
+        getEquipmentLoanUseCase,
     );
 
     server.get(
@@ -88,6 +93,11 @@ export function buildApp() {
     server.post(
         '/api/v1/prestamos',
         equipmentLoanController.create.bind(equipmentLoanController),
+    );
+
+    server.get(
+        '/api/v1/prestamos',
+        equipmentLoanController.getAll.bind(equipmentLoanController),
     );
 
     server.get('/', async (req, rep) => {

@@ -14,7 +14,11 @@ import { LuPlus, LuRefreshCw } from 'react-icons/lu';
 import { useEffect, useMemo, useState } from 'react';
 import { equipmentLoanService } from '../services/equipmentLoan';
 import { membersService } from '../services/members';
-import type { CreateEquipmentLoanRequest, MemberDTO } from '@alentapp/shared';
+import type {
+    CreateEquipmentLoanRequest,
+    EquipmentLoanDTO,
+    MemberDTO,
+} from '@alentapp/shared';
 import {
     DialogRoot,
     DialogContent,
@@ -36,6 +40,7 @@ import {
 } from '../components/ui/select';
 
 export function LoansView() {
+    const [loans, setLoans] = useState<EquipmentLoanDTO[]>([]);
     const [members, setMembers] = useState<MemberDTO[]>([]);
     const [isLoadingMembers, setIsLoadingMembers] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
@@ -61,6 +66,17 @@ export function LoansView() {
             }),
         [members],
     );
+
+    const fetchLoans = async () => {
+        try {
+            const data = await equipmentLoanService.getAll();
+            setLoans(data);
+        } catch (err: unknown) {
+            setFetchError(
+                (err as Error).message || 'Error al cargar los préstamos',
+            );
+        }
+    };
 
     const fetchMembers = async () => {
         setIsLoadingMembers(true);
@@ -88,6 +104,13 @@ export function LoansView() {
             await fetchMembers();
         };
         loadData();
+    }, []);
+
+    useEffect(() => {
+        const loadLoans = async () => {
+            await fetchLoans();
+        };
+        loadLoans();
     }, []);
 
     const openCreateModal = async () => {
@@ -323,10 +346,118 @@ export function LoansView() {
                         </Center>
                     ) : (
                         <Box p="6">
-                            <Text color="fg.muted">
-                                aca quiero mostrar todos los prestamos y su
-                                estado
-                            </Text>
+                            {loans.length === 0 ? (
+                                <Text color="fg.muted" textAlign="center">
+                                    No hay préstamos registrados.
+                                </Text>
+                            ) : (
+                                <Box p="6">
+                                    {loans.length === 0 ? (
+                                        <Text
+                                            color="fg.muted"
+                                            textAlign="center"
+                                        >
+                                            No hay préstamos registrados.
+                                        </Text>
+                                    ) : (
+                                        <Stack gap="4">
+                                            {loans.map((loan) => {
+                                                // Buscamos el socio correspondiente a este préstamo
+                                                const member = members.find(
+                                                    (m) =>
+                                                        m.id === loan.member_id,
+                                                );
+
+                                                return (
+                                                    <Box
+                                                        key={loan.id}
+                                                        p="4"
+                                                        borderWidth="1px"
+                                                        borderRadius="lg"
+                                                        bg="bg.surface"
+                                                        _hover={{
+                                                            shadow: 'md',
+                                                        }}
+                                                    >
+                                                        <Flex
+                                                            justify="space-between"
+                                                            align="center"
+                                                        >
+                                                            <Stack gap="1">
+                                                                <Text
+                                                                    fontWeight="bold"
+                                                                    fontSize="lg"
+                                                                >
+                                                                    {
+                                                                        loan.item_name
+                                                                    }
+                                                                </Text>
+                                                                <Text
+                                                                    fontSize="sm"
+                                                                    color="fg.muted"
+                                                                >
+                                                                    {/* Si encontramos al socio, mostramos su nombre y DNI. Si no, mostramos el ID por defecto */}
+                                                                    Socio:{' '}
+                                                                    {member
+                                                                        ? `${member.name} (DNI: ${member.dni})`
+                                                                        : `ID: ${loan.member_id}`}
+                                                                </Text>
+                                                            </Stack>
+                                                            <Stack
+                                                                align="flex-end"
+                                                                gap="1"
+                                                            >
+                                                                <Text
+                                                                    fontSize="xs"
+                                                                    fontWeight="medium"
+                                                                >
+                                                                    Pedido:{' '}
+                                                                    {new Date(
+                                                                        loan.loan_date,
+                                                                    ).toLocaleDateString()}
+                                                                </Text>
+                                                                <Text
+                                                                    fontSize="xs"
+                                                                    color="red.600"
+                                                                    fontWeight="bold"
+                                                                >
+                                                                    Devolución:{' '}
+                                                                    {new Date(
+                                                                        loan.due_date,
+                                                                    ).toLocaleDateString()}
+                                                                </Text>
+                                                                <Box
+                                                                    px="2"
+                                                                    py="0.5"
+                                                                    bg={
+                                                                        loan.status ===
+                                                                        'Loaned'
+                                                                            ? 'green.100'
+                                                                            : 'blue.100'
+                                                                    }
+                                                                    color={
+                                                                        loan.status ===
+                                                                        'Loaned'
+                                                                            ? 'green.800'
+                                                                            : 'blue.800'
+                                                                    }
+                                                                    borderRadius="full"
+                                                                    fontSize="xs"
+                                                                    fontWeight="bold"
+                                                                >
+                                                                    {
+                                                                        loan.status
+                                                                    }
+                                                                </Box>
+                                                            </Stack>
+                                                        </Flex>
+                                                    </Box>
+                                                );
+                                            })}
+                                        </Stack>
+                                    )}
+                                </Box>
+                            )}
                         </Box>
                     )}
                 </Box>
