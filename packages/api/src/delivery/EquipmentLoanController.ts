@@ -2,11 +2,13 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { NewEquipmentLoanUseCase } from '../application/NewEquipmentLoanUseCase.js';
 import { CreateEquipmentLoanRequest } from '@alentapp/shared';
 import { GetEquipmentLoanUseCase } from '../application/GetEquipmentLoanUseCase.js';
+import { UpdateEquipmentLoanUseCase } from '../application/UpdateEquipmentLoanUseCase.js';
 
 export class EquipmentLoanController {
     constructor(
         private readonly createEquipmentLoanUseCase: NewEquipmentLoanUseCase,
         private readonly getEquipmentLoanUseCase: GetEquipmentLoanUseCase,
+        private readonly updateEquipmentLoanUseCase: UpdateEquipmentLoanUseCase,
     ) {}
 
     async getAll(_request: FastifyRequest, reply: FastifyReply) {
@@ -47,6 +49,36 @@ export class EquipmentLoanController {
             return reply
                 .status(500)
                 .send({ error: 'Error al crear el préstamo de equipo' });
+        }
+    }
+
+    async update(
+        request: FastifyRequest<{
+            Params: { id: string };
+            Body: { status: string };
+        }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            const { status } = request.body;
+
+            const updatedLoan = await this.updateEquipmentLoanUseCase.execute(
+                id,
+                status,
+            );
+            return reply.status(200).send({ data: updatedLoan });
+        } catch (error: any) {
+            if (error.message.includes('No existe')) {
+                return reply.status(404).send({ error: error.message });
+            }
+            if (error.message.includes('devuelto')) {
+                return reply.status(400).send({ error: error.message });
+            }
+            request.log.error(error);
+            return reply
+                .status(500)
+                .send({ error: 'Error al actualizar el préstamo de equipo' });
         }
     }
 }
