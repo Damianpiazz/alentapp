@@ -1,5 +1,5 @@
 import { Box, SimpleGrid, Heading, Text, VStack } from '@chakra-ui/react';
-import { LuUsers, LuTrophy } from 'react-icons/lu';
+import { LuUsers, LuTrophy, LuShield } from 'react-icons/lu';
 import { SectionCard } from '../components/SectionCard';
 
 export function HomeView() {
@@ -37,6 +37,13 @@ export function HomeView() {
                     description="Registra nuevas disciplinas deportivas con sus cupos, precios y requisitos médicos."
                     to="/sports"
                     icon={LuTrophy}
+                />
+
+                <SectionCard
+                    title="Disciplina"
+                    description="Registra y gestiona las sanciones disciplinarias de los socios del club."
+                    to="/disciplines"
+                    icon={LuShield}
                 />
 
                 {/* Future sections can be added here following the same pattern */}
