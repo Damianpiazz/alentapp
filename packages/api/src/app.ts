@@ -12,6 +12,7 @@ import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator
 import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
 import { GetEquipmentLoanUseCase } from './application/GetEquipmentLoanUseCase.js';
 import { EquipmentLoanController } from './delivery/EquipmentLoanController.js';
+import { UpdateEquipmentLoanUseCase } from './application/UpdateEquipmentLoanUseCase.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -62,6 +63,10 @@ export function buildApp() {
         equipmentLoanRepo,
         equipmentLoanValidator,
     );
+    const updateEquipmentLoanUseCase = new UpdateEquipmentLoanUseCase(
+        equipmentLoanRepo,
+        equipmentLoanValidator,
+    );
 
     const memberController = new MemberController(
         createMemberUseCase,
@@ -72,6 +77,7 @@ export function buildApp() {
     const equipmentLoanController = new EquipmentLoanController(
         newEquipmentLoanUseCase,
         getEquipmentLoanUseCase,
+        updateEquipmentLoanUseCase,
     );
 
     server.get(
