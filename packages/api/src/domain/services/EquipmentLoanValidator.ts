@@ -1,5 +1,6 @@
 import { EquipmentLoanRepository } from '../EquipmentLoanRepository.js';
 import { MemberRepository } from '../MemberRepository.js';
+import { EquipmentLoanStatus } from '@alentapp/shared';
 
 export class EquipmentLoanValidator {
     constructor(
@@ -37,6 +38,13 @@ export class EquipmentLoanValidator {
             throw new Error(
                 'La fecha de devolución debe ser posterior a la fecha de préstamo',
             );
+        }
+    }
+
+    validateState(state: string) {
+        const validStates: EquipmentLoanStatus[] = ['Returned', 'Demaged'];
+        if (!validStates.includes(state as EquipmentLoanStatus)) {
+            throw new Error('El equipo ya fue devuelto');
         }
     }
 }
