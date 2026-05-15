@@ -4,7 +4,6 @@ import { CreateSportUseCase } from '../application/CreateSportUseCase.js';
 import { UpdateSportUseCase } from '../application/UpdateSportUseCase.js';
 import { DeleteSportUseCase } from '../application/DeleteSportUseCase.js';
 import { CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
-
 export class SportController {
     constructor(
         private readonly getSportsUseCase: GetSportsUseCase,
@@ -38,7 +37,8 @@ export class SportController {
                 error.message.includes('obligatorio') ||
                 error.message.includes('excede') ||
                 error.message.includes('numérica') ||
-                error.message.includes('negativo')
+                error.message.includes('negativo') ||
+                error.message.includes('caracteres')
             ) {
                 return reply.status(400).send({ error: error.message });
             }
@@ -71,7 +71,8 @@ export class SportController {
                 error.message.includes('obligatorio') ||
                 error.message.includes('excede') ||
                 error.message.includes('numérica') ||
-                error.message.includes('negativo')
+                error.message.includes('negativo') ||
+                error.message.includes('caracteres')
             ) {
                 return reply.status(400).send({ error: error.message });
             }
