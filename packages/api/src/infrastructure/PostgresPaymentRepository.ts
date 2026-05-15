@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
+import { Payment, PrismaClient } from '../generated/client/client.js';
 import { PaymentRepository } from '../domain/PaymentRepository.js';
 import { PaymentDTO } from '@alentapp/shared';
 
@@ -41,6 +41,26 @@ export class PostgresPaymentRepository implements PaymentRepository {
         });
 
         return this.mapToDTO(payment as DBPayment);
+    }
+
+    async findAll(): Promise<PaymentDTO[]> {
+        const payments = await prisma.payment.findMany({
+            where: { deleted_at: null },
+            orderBy: { due_date: 'desc' },
+        });
+
+        return payments.map((payment) => this.mapToDTO(payment as DBPayment));
+    }
+
+    async findById(id: string): Promise<PaymentDTO | null> {
+        const payment = await prisma.payment.findFirst({
+            where: {
+                id: id,
+                deleted_at: null,
+            },
+        });
+
+        return payment ? this.mapToDTO(payment as DBPayment) : null;
     }
 
     private mapToDTO(payment: DBPayment): PaymentDTO {
