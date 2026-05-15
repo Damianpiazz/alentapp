@@ -1,9 +1,44 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import { CreatePaymentUseCase } from '../application/CreatePaymentUseCase.js';
 import { CreatePaymentRequest } from '@alentapp/shared';
+import { GetPaymentsUseCase } from '../application/GetPaymentsUseCase.js';
+import { GetPaymentByIdUseCase } from '../application/GetPaymentByIdUseCase.js';
 
 export class PaymentController {
-    constructor(private readonly createPaymentUseCase: CreatePaymentUseCase) {}
+    constructor(
+        private readonly createPaymentUseCase: CreatePaymentUseCase,
+        private readonly getPaymentsUseCase: GetPaymentsUseCase,
+        private readonly getPaymentByIdUseCase: GetPaymentByIdUseCase,
+    ) {}
+
+    async getAll(_request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const payments = await this.getPaymentsUseCase.execute();
+            return reply.status(200).send({ data: payments });
+        } catch (error: any) {
+            return reply
+                .status(500)
+                .send({ error: 'Error interno al obtener los pagos' });
+        }
+    }
+
+    async getById(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            const payment = await this.getPaymentByIdUseCase.execute(id);
+            return reply.status(200).send({ data: payment });
+        } catch (error: any) {
+            if (error.message === 'El pago no existe') {
+                return reply.status(404).send({ error: error.message });
+            }
+            return reply
+                .status(500)
+                .send({ error: 'Error interno al obtener el pago' });
+        }
+    }
 
     async create(
         request: FastifyRequest<{ Body: CreatePaymentRequest }>,
