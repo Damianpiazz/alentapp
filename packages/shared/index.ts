@@ -52,3 +52,7 @@ export interface CreateEquipmentLoanRequest {
     due_date: Date;
     member_id: string; // UUID
 }
+
+export interface UpdateEquipmentLoanRequest {
+    status: EquipmentLoanStatus;
+}

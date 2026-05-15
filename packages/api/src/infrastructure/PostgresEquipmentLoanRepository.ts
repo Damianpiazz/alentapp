@@ -1,7 +1,14 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/client/client.js';
+import {
+    EquipmentLoanStatus,
+    PrismaClient,
+} from '../generated/client/client.js';
 import { EquipmentLoanRepository } from '../domain/EquipmentLoanRepository.js';
-import { EquipmentLoanDTO, CreateEquipmentLoanRequest } from '@alentapp/shared';
+import {
+    EquipmentLoanDTO,
+    CreateEquipmentLoanRequest,
+    UpdateEquipmentLoanRequest,
+} from '@alentapp/shared';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
@@ -60,5 +67,18 @@ export class PostgresEquipmentLoanRepository implements EquipmentLoanRepository 
             loan_date: loan.loan_date,
             due_date: loan.due_date,
         };
+    }
+
+    async update(
+        id: string,
+        status: EquipmentLoanStatus,
+    ): Promise<EquipmentLoanDTO> {
+        const updatedLoan = await prisma.equipmentLoan.update({
+            where: { id },
+            data: {
+                status,
+            },
+        });
+        return this.mapToDTO(updatedLoan);
     }
 }
