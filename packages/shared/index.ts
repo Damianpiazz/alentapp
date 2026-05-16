@@ -32,6 +32,29 @@ export interface UpdateMemberRequest {
     status?: MemberStatus;
 }
 
+// ==========================================
+// Payment
+// ==========================================
+export type PaymentStatus = 'Pending' | 'Paid' | 'Overdue' | 'Canceled';
+
+export interface PaymentDTO {
+    id: string;
+    amount: number;
+    month: number;
+    year: number;
+    status: PaymentStatus;
+    due_date: string; // ISO Date String (YYYY-MM-DD)
+    payment_date: string | null; // ISO Date String (YYYY-MM-DD)
+    deleted_at: string | null; // ISO Date String (YYYY-MM-DD)
+    member_id: string;
+}
+
+export interface CreatePaymentRequest {
+    amount: number;
+    month: number;
+    year: number;
+    due_date: string; // ISO Date String (YYYY-MM-DD)
+    member_id: string;
 // ===========================================
 // Discipline
 // ==========================================
