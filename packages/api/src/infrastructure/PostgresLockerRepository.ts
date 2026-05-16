@@ -1,12 +1,15 @@
 import { PrismaPg } from '@prisma/adapter-pg';
+
 import {
     PrismaClient,
     LockerLocation,
     LockerStatus,
     Locker,
 } from '../generated/client/client.js';
+
 import { LockerRepository } from '../domain/LockerRepository.js';
-import { LockerDTO } from '@alentapp/shared';
+
+import { UpdateLockerRequest, LockerDTO } from '@alentapp/shared';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -33,6 +36,10 @@ export class PostgresLockerRepository implements LockerRepository {
                 contract_finish_date: locker.contract_finish_date
                     ? new Date(locker.contract_finish_date)
                     : null,
+
+                contract_start_date: locker.contract_start_date
+                    ? new Date(locker.contract_start_date)
+                    : null,
             },
         });
 
@@ -41,7 +48,9 @@ export class PostgresLockerRepository implements LockerRepository {
 
     async findById(id: string): Promise<LockerDTO | null> {
         const locker = await prisma.locker.findUnique({
-            where: { id },
+            where: {
+                id,
+            },
         });
 
         return locker ? this.mapToDTO(locker) : null;
@@ -49,7 +58,9 @@ export class PostgresLockerRepository implements LockerRepository {
 
     async findByNumber(number: string): Promise<LockerDTO | null> {
         const locker = await prisma.locker.findUnique({
-            where: { number },
+            where: {
+                number,
+            },
         });
 
         return locker ? this.mapToDTO(locker) : null;
@@ -63,6 +74,46 @@ export class PostgresLockerRepository implements LockerRepository {
         });
 
         return lockers.map((locker: Locker) => this.mapToDTO(locker));
+    }
+
+    async update(id: string, data: UpdateLockerRequest): Promise<LockerDTO> {
+        const updated = await prisma.locker.update({
+            where: {
+                id,
+            },
+
+            data: {
+                ...(data.number && {
+                    number: data.number,
+                }),
+
+                ...(data.location && {
+                    location: this.mapLocation(data.location),
+                }),
+
+                ...(data.status && {
+                    status: this.mapStatus(data.status),
+                }),
+
+                ...(data.member_id !== undefined && {
+                    member_id: data.member_id,
+                }),
+
+                ...(data.contract_start_date !== undefined && {
+                    contract_start_date: data.contract_start_date
+                        ? new Date(data.contract_start_date)
+                        : null,
+                }),
+
+                ...(data.contract_finish_date !== undefined && {
+                    contract_finish_date: data.contract_finish_date
+                        ? new Date(data.contract_finish_date)
+                        : null,
+                }),
+            },
+        });
+
+        return this.mapToDTO(updated);
     }
 
     private mapToDTO(locker: Locker): LockerDTO {
@@ -80,7 +131,8 @@ export class PostgresLockerRepository implements LockerRepository {
             contract_finish_date:
                 locker.contract_finish_date?.toISOString() ?? null,
 
-            contract_start_date: locker.contract_start_date.toISOString(),
+            contract_start_date:
+                locker.contract_start_date?.toISOString() ?? null,
         };
     }
 
