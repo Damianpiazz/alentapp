@@ -11,7 +11,7 @@ import {
     Input,
     IconButton,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useMemo, useState } from 'react';
 import { equipmentLoanService } from '../services/equipmentLoan';
 import { membersService } from '../services/members';
@@ -210,6 +210,26 @@ export function LoansView() {
             setIsEditSubmitting(false);
         }
     };
+    // logica de eliminacion
+    const handleDeleteLoan = async (id: string, itemName: string) => {
+        if (
+            window.confirm(
+                `¿Estás seguro de que deseas eliminar el préstamo de "${itemName}"?`,
+            )
+        ) {
+            setError(null);
+            setSuccess(null);
+            try {
+                await equipmentLoanService.delete(id);
+                setSuccess('Préstamo eliminado correctamente');
+                await fetchLoans();
+            } catch (err: unknown) {
+                setError(
+                    (err as Error).message || 'Error al eliminar el préstamo',
+                );
+            }
+        }
+    };
 
     return (
         <Box>
@@ -385,19 +405,35 @@ export function LoansView() {
                                                             </Box>
                                                         </Stack>
 
-                                                        {/* --- BOTÓN DE EDITAR --- */}
-                                                        <IconButton
-                                                            variant="ghost"
-                                                            size="md"
-                                                            aria-label="Editar estado del préstamo"
-                                                            onClick={() =>
-                                                                openEditModal(
-                                                                    loan,
-                                                                )
-                                                            }
-                                                        >
-                                                            <LuPencil />
-                                                        </IconButton>
+                                                        {/* --- BOTONES DE ACCIÓN --- */}
+                                                        <HStack gap="2">
+                                                            <IconButton
+                                                                variant="ghost"
+                                                                size="md"
+                                                                aria-label="Editar estado del préstamo"
+                                                                onClick={() =>
+                                                                    openEditModal(
+                                                                        loan,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <LuPencil />
+                                                            </IconButton>
+                                                            <IconButton
+                                                                variant="ghost"
+                                                                size="md"
+                                                                colorPalette="red"
+                                                                aria-label="Eliminar préstamo"
+                                                                onClick={() =>
+                                                                    handleDeleteLoan(
+                                                                        loan.id,
+                                                                        loan.item_name,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <LuTrash2 />
+                                                            </IconButton>
+                                                        </HStack>
                                                     </HStack>
                                                 </Flex>
                                             </Box>
