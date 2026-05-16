@@ -96,23 +96,6 @@ export function buildApp() {
     const disciplineRepo = new PostgresDisciplineRepository();
     const disciplineValidator = new DisciplineValidator(disciplineRepo);
 
-    server.get(
-        '/api/v1/socios',
-        memberController.getAll.bind(memberController),
-    );
-    server.post(
-        '/api/v1/socios',
-        memberController.create.bind(memberController),
-    );
-    server.put(
-        '/api/v1/socios/:id',
-        memberController.update.bind(memberController),
-    );
-    server.delete(
-        '/api/v1/socios/:id',
-        memberController.delete.bind(memberController),
-    );
-
     const createDisciplineUseCase = new CreateDisciplineUseCase(
         disciplineRepo,
         disciplineValidator,
