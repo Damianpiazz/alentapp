@@ -62,5 +62,5 @@ model Locker {
 
   contract_finish_date  DateTime?
 
-  contract_start_date   DateTime       @default(now())
+  contract_start_date   DateTime?       @default(now())
 }
