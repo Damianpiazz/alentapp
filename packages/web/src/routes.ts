@@ -22,6 +22,8 @@ export const router = createBrowserRouter([
             {
                 path: '/sports',
                 Component: SportsView,
+            },
+            {
                 path: '/payments',
                 Component: PaymentsView,
             },
