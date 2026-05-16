@@ -55,6 +55,14 @@ export interface CreatePaymentRequest {
     year: number;
     due_date: string; // ISO Date String (YYYY-MM-DD)
     member_id: string;
+}
+
+export interface UpdatePaymentRequest {
+    amount?: number;
+    status?: PaymentStatus;
+    payment_date?: string | null; // ISO Date String (YYYY-MM-DD)
+}
+
 // ===========================================
 // Discipline
 // ==========================================
