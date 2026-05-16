@@ -7,6 +7,13 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
+import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
+import { GetDisciplinesUseCase } from './application/GetDisciplinesUseCase.js';
+import { UpdateDisciplineUseCase } from './application/UpdateDisciplineUseCase.js';
+import { DeleteDisciplineUseCase } from './application/DeleteDisciplineUseCase.js';
+import { DisciplineController } from './delivery/DisciplineController.js';
+import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
 
 import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
 import { PaymentValidator } from './domain/services/PaymentValidator.js';
@@ -77,6 +84,66 @@ export function buildApp() {
     server.delete(
         '/api/v1/socios/:id',
         memberController.delete.bind(memberController),
+    );
+
+    // Discipline
+    const disciplineRepo = new PostgresDisciplineRepository();
+    const disciplineValidator = new DisciplineValidator(disciplineRepo);
+
+    server.get(
+        '/api/v1/socios',
+        memberController.getAll.bind(memberController),
+    );
+    server.post(
+        '/api/v1/socios',
+        memberController.create.bind(memberController),
+    );
+    server.put(
+        '/api/v1/socios/:id',
+        memberController.update.bind(memberController),
+    );
+    server.delete(
+        '/api/v1/socios/:id',
+        memberController.delete.bind(memberController),
+    const createDisciplineUseCase = new CreateDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
+    const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
+
+    const updateDisciplineUseCase = new UpdateDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
+    const deleteDisciplineUseCase = new DeleteDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
+    const disciplineController = new DisciplineController(
+        createDisciplineUseCase,
+        getDisciplinesUseCase,
+        updateDisciplineUseCase,
+        deleteDisciplineUseCase,
+    );
+
+    server.get(
+        '/api/v1/disciplines',
+        disciplineController.getAll.bind(disciplineController),
+    );
+    server.post(
+        '/api/v1/disciplines',
+        disciplineController.create.bind(disciplineController),
+    );
+    server.put(
+        '/api/v1/disciplines/:id',
+        disciplineController.update.bind(disciplineController),
+    );
+    server.delete(
+        '/api/v1/disciplines/:id',
+        disciplineController.delete.bind(disciplineController),
     );
 
     server.get('/', async (req, rep) => {
