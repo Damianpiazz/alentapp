@@ -25,6 +25,13 @@ import { DeleteDisciplineUseCase } from './application/DeleteDisciplineUseCase.j
 import { DisciplineController } from './delivery/DisciplineController.js';
 import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
 
+import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
+import { PaymentValidator } from './domain/services/PaymentValidator.js';
+import { CreatePaymentUseCase } from './application/CreatePaymentUseCase.js';
+import { GetPaymentsUseCase } from './application/GetPaymentsUseCase.js';
+import { GetPaymentByIdUseCase } from './application/GetPaymentByIdUseCase.js';
+import { PaymentController } from './delivery/PaymentController.js';
+
 export function buildApp() {
     const server = Fastify({
         logger: {
@@ -49,9 +56,9 @@ export function buildApp() {
         credentials: true,
     });
 
-    // =========================
-    // MEMBERS
-    // =========================
+    // ==========================================
+    // MEMBER
+    // ==========================================
 
     const memberRepo = new PostgresMemberRepository();
     const memberValidator = new MemberValidator(memberRepo);
@@ -148,6 +155,21 @@ export function buildApp() {
 
     const disciplineValidator = new DisciplineValidator(disciplineRepo);
 
+    server.get(
+        '/api/v1/socios',
+        memberController.getAll.bind(memberController),
+    );
+    server.post(
+        '/api/v1/socios',
+        memberController.create.bind(memberController),
+    );
+    server.put(
+        '/api/v1/socios/:id',
+        memberController.update.bind(memberController),
+    );
+    server.delete(
+        '/api/v1/socios/:id',
+        memberController.delete.bind(memberController),
     const createDisciplineUseCase = new CreateDisciplineUseCase(
         disciplineRepo,
         disciplineValidator,
@@ -199,6 +221,43 @@ export function buildApp() {
     server.get('/', async (_req, rep) => {
         rep.status(200).send({ msg: 'asd' });
     });
+
+    // ==========================================
+    // PAYMENT
+    // ==========================================
+
+    const paymentRepository = new PostgresPaymentRepository();
+    const paymentValidator = new PaymentValidator();
+
+    const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepository);
+    const getPaymentByIdUseCase = new GetPaymentByIdUseCase(paymentRepository);
+
+    const createPaymentUseCase = new CreatePaymentUseCase(
+        paymentRepository,
+        memberRepo,
+        paymentValidator,
+    );
+
+    const paymentController = new PaymentController(
+        createPaymentUseCase,
+        getPaymentsUseCase,
+        getPaymentByIdUseCase,
+    );
+
+    server.post(
+        '/api/v1/payments',
+        paymentController.create.bind(paymentController),
+    );
+
+    server.get(
+        '/api/v1/payments',
+        paymentController.getAll.bind(paymentController),
+    );
+
+    server.get(
+        '/api/v1/payments/:id',
+        paymentController.getById.bind(paymentController),
+    );
 
     return server;
 }
