@@ -30,6 +30,7 @@ import { PaymentValidator } from './domain/services/PaymentValidator.js';
 import { CreatePaymentUseCase } from './application/CreatePaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/GetPaymentsUseCase.js';
 import { GetPaymentByIdUseCase } from './application/GetPaymentByIdUseCase.js';
+import { DeletePaymentUseCase } from './application/DeletePaymentUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
 
 export function buildApp() {
@@ -170,6 +171,8 @@ export function buildApp() {
     server.delete(
         '/api/v1/socios/:id',
         memberController.delete.bind(memberController),
+    );
+
     const createDisciplineUseCase = new CreateDisciplineUseCase(
         disciplineRepo,
         disciplineValidator,
@@ -238,10 +241,16 @@ export function buildApp() {
         paymentValidator,
     );
 
+    const deletePaymentUseCase = new DeletePaymentUseCase(
+        paymentRepository,
+        paymentValidator,
+    );
+
     const paymentController = new PaymentController(
         createPaymentUseCase,
         getPaymentsUseCase,
         getPaymentByIdUseCase,
+        deletePaymentUseCase,
     );
 
     server.post(
@@ -257,6 +266,11 @@ export function buildApp() {
     server.get(
         '/api/v1/payments/:id',
         paymentController.getById.bind(paymentController),
+    );
+
+    server.delete(
+        '/api/v1/payments/:id',
+        paymentController.delete.bind(paymentController),
     );
 
     return server;

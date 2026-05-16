@@ -3,12 +3,14 @@ import { CreatePaymentUseCase } from '../application/CreatePaymentUseCase.js';
 import { CreatePaymentRequest } from '@alentapp/shared';
 import { GetPaymentsUseCase } from '../application/GetPaymentsUseCase.js';
 import { GetPaymentByIdUseCase } from '../application/GetPaymentByIdUseCase.js';
+import { DeletePaymentUseCase } from '../application/DeletePaymentUseCase.js';
 
 export class PaymentController {
     constructor(
         private readonly createPaymentUseCase: CreatePaymentUseCase,
         private readonly getPaymentsUseCase: GetPaymentsUseCase,
         private readonly getPaymentByIdUseCase: GetPaymentByIdUseCase,
+        private readonly deletePaymentUseCase: DeletePaymentUseCase,
     ) {}
 
     async getAll(_request: FastifyRequest, reply: FastifyReply) {
@@ -50,15 +52,16 @@ export class PaymentController {
             );
 
             return reply.status(201).send({ data: payment });
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as Error;
             // 404: El socio no existe
-            if (error.message.includes('Socio no encontrado')) {
-                return reply.status(404).send({ error: error.message });
+            if (err.message.includes('Socio no encontrado')) {
+                return reply.status(404).send({ error: err.message });
             }
 
             // 400: Faltan datos
-            if (error.message.includes('faltan')) {
-                return reply.status(400).send({ error: error.message });
+            if (err.message.includes('faltan')) {
+                return reply.status(400).send({ error: err.message });
             }
 
             // 500: Error de base de datos
@@ -66,6 +69,32 @@ export class PaymentController {
             return reply
                 .status(500)
                 .send({ error: 'Error interno, reintente más tarde' });
+        }
+    }
+
+    // TDD-0015: Borrado Lógico
+    async delete(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            await this.deletePaymentUseCase.execute(id);
+            return reply
+                .status(200)
+                .send({ message: 'Pago anulado exitosamente' });
+        } catch (error) {
+            const err = error as Error;
+            if (err.message === 'El pago no existe') {
+                return reply.status(404).send({ error: err.message });
+            }
+            if (err.message === 'No se puede anular un pago ya procesado') {
+                return reply.status(409).send({ error: err.message });
+            }
+            request.log.error(error);
+            return reply
+                .status(500)
+                .send({ error: 'Error interno al anular el pago' });
         }
     }
 }
