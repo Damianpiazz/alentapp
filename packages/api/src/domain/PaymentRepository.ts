@@ -5,4 +5,6 @@ import { PaymentDTO } from '@alentapp/shared';
 
 export interface PaymentRepository {
     create(payment: Omit<PaymentDTO, 'id'>): Promise<PaymentDTO>;
+    findAll(): Promise<PaymentDTO[]>;
+    findById(id: string): Promise<PaymentDTO | null>;
 }

@@ -1,4 +1,5 @@
 import {
+    Table,
     Button,
     Heading,
     HStack,
@@ -7,12 +8,18 @@ import {
     Box,
     Flex,
     Input,
+    Spinner,
+    Center,
 } from '@chakra-ui/react';
-import { LuPlus } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw } from 'react-icons/lu';
 import { useEffect, useState, useMemo } from 'react';
 import { paymentsService } from '../services/payments';
 import { membersService } from '../services/members';
-import type { CreatePaymentRequest, MemberDTO } from '@alentapp/shared';
+import type {
+    CreatePaymentRequest,
+    MemberDTO,
+    PaymentDTO,
+} from '@alentapp/shared';
 import {
     DialogRoot,
     DialogContent,
@@ -41,7 +48,9 @@ const monthsCollection = createListCollection({
 });
 
 export function PaymentsView() {
+    const [payments, setPayments] = useState<PaymentDTO[]>([]);
     const [members, setMembers] = useState<MemberDTO[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -79,6 +88,18 @@ export function PaymentsView() {
         }
     };
 
+    const fetchPayments = async () => {
+        setIsLoading(true);
+        try {
+            const data = await paymentsService.getAll();
+            setPayments(data);
+        } catch {
+            setError('Error al cargar los pagos');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const openCreateModal = () => {
         setSuccessMsg(null);
         setError(null);
@@ -110,6 +131,7 @@ export function PaymentsView() {
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchPayments();
         fetchMembers();
     }, []);
 
@@ -129,13 +151,22 @@ export function PaymentsView() {
                             los socios.
                         </Text>
                     </Stack>
-                    <Button
-                        colorPalette="blue"
-                        size="md"
-                        onClick={openCreateModal}
-                    >
-                        <LuPlus /> Generar Pago
-                    </Button>
+                    <HStack gap="3">
+                        <Button
+                            variant="outline"
+                            onClick={fetchPayments}
+                            disabled={isLoading}
+                        >
+                            <LuRefreshCw /> Actualizar
+                        </Button>
+                        <Button
+                            colorPalette="blue"
+                            size="md"
+                            onClick={openCreateModal}
+                        >
+                            <LuPlus /> Generar Pago
+                        </Button>
+                    </HStack>
                 </Flex>
 
                 <DialogContent>
@@ -280,7 +311,14 @@ export function PaymentsView() {
                 </DialogContent>
 
                 {error && (
-                    <Box p="4" bg="red.50" color="red.700" borderRadius="md">
+                    <Box
+                        p="4"
+                        bg="red.50"
+                        color="red.700"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor="red.200"
+                    >
                         <Text fontWeight="bold">Error:</Text>
                         <Text>{error}</Text>
                     </Box>
@@ -292,24 +330,126 @@ export function PaymentsView() {
                         bg="green.50"
                         color="green.700"
                         borderRadius="md"
+                        border="1px solid"
+                        borderColor="green.200"
                     >
                         <Text>{successMsg}</Text>
                     </Box>
                 )}
 
-                {/* pantalla vacía porque la feature listar (GET) la voy a hacer en otra rama */}
                 <Box
                     bg="bg.panel"
                     borderRadius="xl"
                     boxShadow="sm"
                     borderWidth="1px"
-                    p="8"
-                    textAlign="center"
+                    overflow="hidden"
+                    minH="300px"
+                    position="relative"
                 >
-                    <Text color="fg.muted">
-                        La vista de listado de pagos se implementará en una
-                        futura funcionalidad.
-                    </Text>
+                    {isLoading ? (
+                        <Center h="300px">
+                            <Stack align="center" gap="4">
+                                <Spinner size="xl" color="blue.500" />
+                                <Text color="fg.muted">Cargando pagos...</Text>
+                            </Stack>
+                        </Center>
+                    ) : payments.length === 0 ? (
+                        <Center h="300px">
+                            <Stack align="center" gap="4">
+                                <Text color="fg.muted">
+                                    No se encontraron pagos.
+                                </Text>
+                                <Button variant="ghost" onClick={fetchPayments}>
+                                    Reintentar
+                                </Button>
+                            </Stack>
+                        </Center>
+                    ) : (
+                        <Table.Root size="md" variant="line" interactive>
+                            <Table.Header>
+                                <Table.Row bg="bg.muted/50">
+                                    <Table.ColumnHeader py="4">
+                                        Socio
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader py="4">
+                                        Monto
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader py="4">
+                                        Período
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader py="4">
+                                        Vencimiento
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader py="4">
+                                        Estado
+                                    </Table.ColumnHeader>
+                                </Table.Row>
+                            </Table.Header>
+                            <Table.Body>
+                                {payments.map((payment) => {
+                                    // Buscamos el socio para mostrar su nombre en lugar del UUID
+                                    const member = members.find(
+                                        (m) => m.id === payment.member_id,
+                                    );
+                                    const memberName = member
+                                        ? `${member.name}`
+                                        : 'Socio Eliminado/Desconocido';
+
+                                    // Lógica de colores para los estados
+                                    let statusColor = 'gray';
+                                    if (payment.status === 'Paid')
+                                        statusColor = 'green';
+                                    else if (payment.status === 'Pending')
+                                        statusColor = 'blue';
+                                    else if (payment.status === 'Overdue')
+                                        statusColor = 'red';
+                                    else if (payment.status === 'Canceled')
+                                        statusColor = 'orange';
+
+                                    return (
+                                        <Table.Row
+                                            key={payment.id}
+                                            _hover={{ bg: 'bg.muted/30' }}
+                                        >
+                                            <Table.Cell
+                                                fontWeight="semibold"
+                                                color="fg.emphasized"
+                                            >
+                                                {memberName}
+                                            </Table.Cell>
+                                            <Table.Cell color="fg.muted">
+                                                ${payment.amount}
+                                            </Table.Cell>
+                                            <Table.Cell color="fg.muted">
+                                                {payment.month}/{payment.year}
+                                            </Table.Cell>
+                                            <Table.Cell color="fg.muted">
+                                                {payment.due_date
+                                                    ? new Date(
+                                                          payment.due_date,
+                                                      ).toLocaleDateString()
+                                                    : '-'}
+                                            </Table.Cell>
+                                            <Table.Cell>
+                                                <Box
+                                                    display="inline-block"
+                                                    px="2"
+                                                    py="0.5"
+                                                    borderRadius="md"
+                                                    bg={`${statusColor}.50`}
+                                                    color={`${statusColor}.700`}
+                                                    fontSize="xs"
+                                                    fontWeight="bold"
+                                                >
+                                                    {payment.status}
+                                                </Box>
+                                            </Table.Cell>
+                                        </Table.Row>
+                                    );
+                                })}
+                            </Table.Body>
+                        </Table.Root>
+                    )}
                 </Box>
             </Stack>
         </DialogRoot>
