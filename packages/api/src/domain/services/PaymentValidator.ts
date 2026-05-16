@@ -17,4 +17,14 @@ export class PaymentValidator {
             );
         }
     }
+
+    // TDD-0014: Validar idempotencia para la actualización/cobro
+    validateForUpdate(currentStatus: PaymentStatus): void {
+        if (currentStatus === 'Paid') {
+            throw new Error('El pago ya se encuentra procesado');
+        }
+        if (currentStatus === 'Canceled') {
+            throw new Error('No se puede cobrar un pago que fue anulado');
+        }
+    }
 }
