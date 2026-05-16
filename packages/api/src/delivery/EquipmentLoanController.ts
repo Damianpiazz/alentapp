@@ -3,12 +3,14 @@ import { NewEquipmentLoanUseCase } from '../application/NewEquipmentLoanUseCase.
 import { CreateEquipmentLoanRequest } from '@alentapp/shared';
 import { GetEquipmentLoanUseCase } from '../application/GetEquipmentLoanUseCase.js';
 import { UpdateEquipmentLoanUseCase } from '../application/UpdateEquipmentLoanUseCase.js';
+import { DeleteEquipmentLoanUseCase } from '../application/DeleteEquipmentLoanUseCase.js';
 
 export class EquipmentLoanController {
     constructor(
         private readonly createEquipmentLoanUseCase: NewEquipmentLoanUseCase,
         private readonly getEquipmentLoanUseCase: GetEquipmentLoanUseCase,
         private readonly updateEquipmentLoanUseCase: UpdateEquipmentLoanUseCase,
+        private readonly deleteEquipmentLoanUseCase: DeleteEquipmentLoanUseCase,
     ) {}
 
     async getAll(_request: FastifyRequest, reply: FastifyReply) {
@@ -79,6 +81,19 @@ export class EquipmentLoanController {
             return reply
                 .status(500)
                 .send({ error: 'Error al actualizar el préstamo de equipo' });
+        }
+    }
+
+    async delete(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            await this.deleteEquipmentLoanUseCase.execute(id);
+            return reply.status(204).send(); // No Content
+        } catch (error: any) {
+            return reply.status(400).send({ error: error.message });
         }
     }
 }
