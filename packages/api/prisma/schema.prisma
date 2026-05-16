@@ -78,3 +78,17 @@ model Discipline {
     
     @@map("disciplines")
 }
+
+model Sport {
+    id                           String   @id @default(uuid())
+    name                         String
+    description                  String
+    max_capacity                 Int
+    additional_price             Decimal  @db.Decimal(10, 2)
+    requires_medical_certificate Boolean  @default(false)
+    created_at                   DateTime @default(now())
+    deleted_at                   DateTime?
+    
+    @@unique([name, deleted_at])
+    @@map("sports")
+}

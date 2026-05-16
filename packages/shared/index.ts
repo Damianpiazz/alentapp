@@ -32,6 +32,32 @@ export interface UpdateMemberRequest {
     status?: MemberStatus;
 }
 
+export interface SportDTO {
+    id: string;
+    name: string;
+    description: string;
+    max_capacity: number;
+    additional_price: number;
+    requires_medical_certificate: boolean;
+    created_at: string;
+    deleted_at: string | null;
+}
+export interface CreateSportRequest {
+    name: string;
+    description: string;
+    max_capacity: number;
+    additional_price: number;
+    requires_medical_certificate: boolean;
+}
+export interface UpdateSportRequest {
+    description?: string;
+    max_capacity?: number;
+    additional_price?: number;
+    requires_medical_certificate?: boolean;
+    // ===========================================
+    // Discipline
+    // ==========================================
+}
 // ==========================================
 // Payment
 // ==========================================
