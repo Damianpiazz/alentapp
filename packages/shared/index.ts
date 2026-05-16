@@ -56,7 +56,7 @@ export interface LockerDTO {
 
     contract_finish_date?: string | null;
 
-    contract_start_date: string;
+    contract_start_date: string | null;
 }
 
 export interface CreateLockerRequest {
@@ -64,3 +64,17 @@ export interface CreateLockerRequest {
 
     location: LockerLocation;
 }
+
+export type UpdateLockerRequest = {
+    number?: string;
+
+    location?: 'Vestuario Masculino' | 'Vestuario Femenino' | 'Niños';
+
+    status?: 'Disponible' | 'Ocupado' | 'Mantenimiento';
+
+    member_id?: string | null;
+
+    contract_finish_date?: string | null;
+
+    contract_start_date?: string | null;
+};
