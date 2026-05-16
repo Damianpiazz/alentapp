@@ -81,4 +81,10 @@ export class PostgresEquipmentLoanRepository implements EquipmentLoanRepository 
         });
         return this.mapToDTO(updatedLoan);
     }
+
+    async delete(id: string): Promise<void> {
+        await prisma.equipmentLoan.delete({
+            where: { id },
+        });
+    }
 }
