@@ -9,11 +9,10 @@ import {
     Flex,
     Spinner,
     Center,
+    Input,
 } from '@chakra-ui/react';
 
-import { Input } from '@chakra-ui/react';
-
-import { LuPlus, LuRefreshCw } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
 
 import { useEffect, useState } from 'react';
 
@@ -22,7 +21,9 @@ import { lockersService } from '../services/lockers';
 import type {
     LockerDTO,
     CreateLockerRequest,
+    UpdateLockerRequest,
     LockerLocation,
+    LockerStatus,
 } from '@alentapp/shared';
 
 import {
@@ -51,20 +52,32 @@ const locations = createListCollection({
     items: [
         {
             label: 'Vestuario Masculino',
-
             value: 'Vestuario Masculino',
         },
-
         {
             label: 'Vestuario Femenino',
-
             value: 'Vestuario Femenino',
         },
-
         {
             label: 'Niños',
-
             value: 'Niños',
+        },
+    ],
+});
+
+const statuses = createListCollection({
+    items: [
+        {
+            label: 'Disponible',
+            value: 'Disponible',
+        },
+        {
+            label: 'Ocupado',
+            value: 'Ocupado',
+        },
+        {
+            label: 'Mantenimiento',
+            value: 'Mantenimiento',
         },
     ],
 });
@@ -80,10 +93,17 @@ export function LockersView() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [formData, setFormData] = useState<CreateLockerRequest>({
-        number: '',
+    const [editingLocker, setEditingLocker] = useState<LockerDTO | null>(null);
 
+    const [formData, setFormData] = useState<
+        CreateLockerRequest & UpdateLockerRequest
+    >({
+        number: '',
         location: 'Vestuario Masculino',
+        status: 'Disponible',
+        member_id: null,
+        contract_finish_date: null,
+        contract_start_date: null,
     });
 
     const fetchLockers = async () => {
@@ -108,10 +128,36 @@ export function LockersView() {
     };
 
     const openCreateModal = () => {
+        setEditingLocker(null);
+
         setFormData({
             number: '',
-
             location: 'Vestuario Masculino',
+            status: 'Disponible',
+            member_id: null,
+            contract_finish_date: null,
+            contract_start_date: null,
+        });
+
+        setIsDialogOpen(true);
+    };
+
+    const openEditModal = (locker: LockerDTO) => {
+        setEditingLocker(locker);
+
+        setFormData({
+            number: locker.number,
+            location: locker.location,
+            status: locker.status,
+            member_id: locker.member_id,
+            contract_start_date: locker.contract_start_date,
+            contract_finish_date: locker.contract_finish_date
+                ? locker.contract_finish_date
+                      .split('T')[0]
+                      .split('-')
+                      .reverse()
+                      .join('/')
+                : '',
         });
 
         setIsDialogOpen(true);
@@ -123,13 +169,32 @@ export function LockersView() {
         setIsSubmitting(true);
 
         try {
-            await lockersService.create(formData);
+            if (editingLocker) {
+                await lockersService.update(editingLocker.id, formData);
+            } else {
+                await lockersService.create(formData);
+            }
 
             setIsDialogOpen(false);
 
-            fetchLockers();
+            setEditingLocker(null);
+
+            if (editingLocker) {
+                setLockers((prev) =>
+                    prev.map((locker) =>
+                        locker.id === editingLocker.id
+                            ? {
+                                  ...locker,
+                                  ...formData,
+                              }
+                            : locker,
+                    ),
+                );
+            } else {
+                await fetchLockers();
+            }
         } catch (error: unknown) {
-            alert((error as Error).message || 'Error al crear locker');
+            alert((error as Error).message || 'Error al guardar locker');
         } finally {
             setIsSubmitting(false);
         }
@@ -180,7 +245,11 @@ export function LockersView() {
                 <DialogContent>
                     <form onSubmit={handleSubmit}>
                         <DialogHeader>
-                            <DialogTitle>Agregar Nuevo Locker</DialogTitle>
+                            <DialogTitle>
+                                {editingLocker
+                                    ? 'Editar Locker'
+                                    : 'Agregar Nuevo Locker'}
+                            </DialogTitle>
                         </DialogHeader>
 
                         <DialogBody>
@@ -192,7 +261,6 @@ export function LockersView() {
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
-
                                                 number: e.target.value,
                                             })
                                         }
@@ -204,14 +272,13 @@ export function LockersView() {
                                     <SelectRoot
                                         collection={locations}
                                         value={[formData.location]}
-                                        onValueChange={(e) =>
+                                        onValueChange={(e) => {
                                             setFormData({
                                                 ...formData,
-
                                                 location: e
                                                     .value[0] as LockerLocation,
-                                            })
-                                        }
+                                            });
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValueText placeholder="Seleccione ubicación" />
@@ -229,6 +296,138 @@ export function LockersView() {
                                         </SelectContent>
                                     </SelectRoot>
                                 </Field>
+
+                                <Field label="Estado">
+                                    <SelectRoot
+                                        collection={statuses}
+                                        value={[
+                                            formData.status || 'Disponible',
+                                        ]}
+                                        onValueChange={(e) => {
+                                            const nextStatus = e
+                                                .value[0] as LockerStatus;
+
+                                            if (nextStatus !== 'Ocupado') {
+                                                setFormData({
+                                                    ...formData,
+
+                                                    status: nextStatus,
+
+                                                    member_id: null,
+
+                                                    contract_finish_date: null,
+                                                });
+
+                                                return;
+                                            }
+
+                                            setFormData({
+                                                ...formData,
+
+                                                status: nextStatus,
+                                            });
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValueText placeholder="Seleccione estado" />
+                                        </SelectTrigger>
+
+                                        <SelectContent>
+                                            {statuses.items
+                                                .filter((status) => {
+                                                    if (!editingLocker) {
+                                                        return true;
+                                                    }
+
+                                                    if (
+                                                        editingLocker.status ===
+                                                        'Mantenimiento'
+                                                    ) {
+                                                        return (
+                                                            status.value !==
+                                                            'Ocupado'
+                                                        );
+                                                    }
+
+                                                    if (
+                                                        editingLocker.status ===
+                                                        'Ocupado'
+                                                    ) {
+                                                        return (
+                                                            status.value !==
+                                                            'Mantenimiento'
+                                                        );
+                                                    }
+
+                                                    return true;
+                                                })
+                                                .map((status) => (
+                                                    <SelectItem
+                                                        item={status}
+                                                        key={status.value}
+                                                    >
+                                                        {status.label}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </SelectRoot>
+                                </Field>
+
+                                {formData.status === 'Ocupado' && (
+                                    <>
+                                        <Field label="DNI del socio">
+                                            <Input
+                                                placeholder="Ej. 12345678"
+                                                value={formData.member_id || ''}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        member_id:
+                                                            e.target.value ||
+                                                            null,
+                                                    })
+                                                }
+                                            />
+                                        </Field>
+
+                                        <Field label="Fecha Fin Contrato">
+                                            <Input
+                                                placeholder="dd/mm/aaaa"
+                                                value={
+                                                    formData.contract_finish_date ||
+                                                    ''
+                                                }
+                                                onChange={(e) => {
+                                                    let value =
+                                                        e.target.value.replace(
+                                                            /\D/g,
+                                                            '',
+                                                        );
+
+                                                    if (value.length > 2) {
+                                                        value =
+                                                            value.slice(0, 2) +
+                                                            '/' +
+                                                            value.slice(2);
+                                                    }
+
+                                                    if (value.length > 5) {
+                                                        value =
+                                                            value.slice(0, 5) +
+                                                            '/' +
+                                                            value.slice(5, 9);
+                                                    }
+
+                                                    setFormData({
+                                                        ...formData,
+                                                        contract_finish_date:
+                                                            value,
+                                                    });
+                                                }}
+                                            />
+                                        </Field>
+                                    </>
+                                )}
                             </Stack>
                         </DialogBody>
 
@@ -242,7 +441,9 @@ export function LockersView() {
                                 colorPalette="blue"
                                 loading={isSubmitting}
                             >
-                                Crear Locker
+                                {editingLocker
+                                    ? 'Actualizar Locker'
+                                    : 'Crear Locker'}
                             </Button>
                         </DialogFooter>
 
@@ -282,6 +483,14 @@ export function LockersView() {
                                     <Table.ColumnHeader>
                                         Estado
                                     </Table.ColumnHeader>
+
+                                    <Table.ColumnHeader>
+                                        Vencimiento
+                                    </Table.ColumnHeader>
+
+                                    <Table.ColumnHeader>
+                                        Acciones
+                                    </Table.ColumnHeader>
                                 </Table.Row>
                             </Table.Header>
 
@@ -295,6 +504,27 @@ export function LockersView() {
                                         </Table.Cell>
 
                                         <Table.Cell>{locker.status}</Table.Cell>
+
+                                        <Table.Cell>
+                                            {locker.contract_finish_date
+                                                ? new Date(
+                                                      locker.contract_finish_date,
+                                                  ).toLocaleDateString('es-AR')
+                                                : '-'}
+                                        </Table.Cell>
+
+                                        <Table.Cell>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    openEditModal(locker)
+                                                }
+                                            >
+                                                <LuPencil />
+                                                Editar
+                                            </Button>
+                                        </Table.Cell>
                                     </Table.Row>
                                 ))}
                             </Table.Body>
