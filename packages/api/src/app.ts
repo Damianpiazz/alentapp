@@ -13,6 +13,7 @@ import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.j
 import { GetEquipmentLoanUseCase } from './application/GetEquipmentLoanUseCase.js';
 import { EquipmentLoanController } from './delivery/EquipmentLoanController.js';
 import { UpdateEquipmentLoanUseCase } from './application/UpdateEquipmentLoanUseCase.js';
+import { DeleteEquipmentLoanUseCase } from './application/DeleteEquipmentLoanUseCase.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -67,6 +68,9 @@ export function buildApp() {
         equipmentLoanRepo,
         equipmentLoanValidator,
     );
+    const deleteEquipmentLoanUseCase = new DeleteEquipmentLoanUseCase(
+        equipmentLoanRepo,
+    );
 
     const memberController = new MemberController(
         createMemberUseCase,
@@ -78,6 +82,7 @@ export function buildApp() {
         newEquipmentLoanUseCase,
         getEquipmentLoanUseCase,
         updateEquipmentLoanUseCase,
+        deleteEquipmentLoanUseCase,
     );
 
     server.get(
@@ -108,6 +113,10 @@ export function buildApp() {
     server.put(
         '/api/v1/prestamos/:id',
         equipmentLoanController.update.bind(equipmentLoanController),
+    );
+    server.delete(
+        '/api/v1/prestamos/:id',
+        equipmentLoanController.delete.bind(equipmentLoanController),
     );
 
     server.get('/', async (req, rep) => {
