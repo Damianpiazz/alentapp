@@ -28,10 +28,14 @@ export class UpdateLockerUseCase {
         }
 
         if (data.contract_finish_date) {
-            const parts = data.contract_finish_date.split('/');
+            const rawDate = data.contract_finish_date.replace(/\D/g, '');
 
-            if (parts.length === 3) {
-                const [day, month, year] = parts;
+            if (rawDate.length === 8) {
+                const day = rawDate.slice(0, 2);
+
+                const month = rawDate.slice(2, 4);
+
+                const year = rawDate.slice(4, 8);
 
                 data.contract_finish_date = `${year}-${month}-${day}`;
             }
