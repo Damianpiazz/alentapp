@@ -36,8 +36,6 @@ Permitir a los administrativos modificar la información de lockers existentes, 
 * El sistema debe validar que la fecha de vencimiento sea igual o posterior a la fecha actual.
 * El sistema no debe permitir asignar un locker en estado "Mantenimiento".
 * Si un locker se asigna a un socio, su estado debe pasar automáticamente a "Ocupado".
-* Si un locker queda sin socio asignado, su estado debe volver automáticamente a "Disponible".
-* Si un locker queda sin socio asignado, su estado debe volver automáticamente a `Disponible`.
 * El sistema debe validar que el socio exista antes de asignar el locker.
 * El sistema debe requerir un socio asignado cuando el estado sea `Ocupado`.
 * El sistema debe limpiar automáticamente fechas y socio cuando el locker vuelva a `Disponible`.
@@ -80,7 +78,6 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 | ------------- | -------------- | --------- |
 | Disponible    | Ocupado        | Sí        |
 | Disponible    | Mantenimiento  | Sí        |
-| Ocupado       | Disponible     | Sí        |
 | Ocupado       | Mantenimiento  | No        |
 | Mantenimiento | Disponible     | Sí        |
 | Mantenimiento | Ocupado        | No        |
