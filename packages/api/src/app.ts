@@ -8,6 +8,11 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+import { PostgresEquipmentLoanRepository } from './infrastructure/PostgresEquipmentLoanRepository.js';
+import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator.js';
+import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
+import { GetEquipmentLoanUseCase } from './application/GetEquipmentLoanUseCase.js';
+import { EquipmentLoanController } from './delivery/EquipmentLoanController.js';
 
 import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
 import { SportValidator } from './domain/services/SportValidator.js';
@@ -62,11 +67,17 @@ export function buildApp() {
 
     const memberRepo = new PostgresMemberRepository();
     const memberValidator = new MemberValidator(memberRepo);
+    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+    const equipmentLoanValidator = new EquipmentLoanValidator(
+        equipmentLoanRepo,
+        memberRepo,
+    );
 
     const createMemberUseCase = new CreateMemberUseCase(
         memberRepo,
         memberValidator,
     );
+    const getMembersUseCase = new GetMembersUseCase(memberRepo);
 
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
 
@@ -76,6 +87,13 @@ export function buildApp() {
     );
 
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+    const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
+        equipmentLoanRepo,
+    );
+    const newEquipmentLoanUseCase = new NewEquipmentLoanUseCase(
+        equipmentLoanRepo,
+        equipmentLoanValidator,
+    );
 
     const memberController = new MemberController(
         createMemberUseCase,
@@ -83,6 +101,38 @@ export function buildApp() {
         updateMemberUseCase,
         deleteMemberUseCase,
     );
+    const equipmentLoanController = new EquipmentLoanController(
+        newEquipmentLoanUseCase,
+        getEquipmentLoanUseCase,
+    );
+
+    server.get(
+        '/api/v1/socios',
+        memberController.getAll.bind(memberController),
+    );
+    server.post(
+        '/api/v1/socios',
+        memberController.create.bind(memberController),
+    );
+    server.put(
+        '/api/v1/socios/:id',
+        memberController.update.bind(memberController),
+    );
+    server.delete(
+        '/api/v1/socios/:id',
+        memberController.delete.bind(memberController),
+    );
+    server.post(
+        '/api/v1/prestamos',
+        equipmentLoanController.create.bind(equipmentLoanController),
+    );
+
+    server.get(
+        '/api/v1/prestamos',
+        equipmentLoanController.getAll.bind(equipmentLoanController),
+    );
+
+    server.get('/', async (req, rep) => {
 
     server.get(
         '/api/v1/socios',
@@ -267,6 +317,8 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
 
     const port = parseInt(process.env.PORT || '3000', 10);
 
+    server.listen({ port, host: '0.0.0.0' }, () =>
+        server.log.info(`API server running on http://localhost:${port}`),
     server.listen(
         {
             port,

@@ -32,6 +32,25 @@ export interface UpdateMemberRequest {
     status?: MemberStatus;
 }
 
+// ==========================================
+// EquipmentLoan
+// ==========================================
+
+export type EquipmentLoanStatus = 'Loaned' | 'Returned' | 'Demaged';
+
+export interface EquipmentLoanDTO {
+    id: string; // UUID
+    item_name: string;
+    status: EquipmentLoanStatus;
+    loan_date: Date;
+    due_date: Date;
+    member_id: string; // UUID
+}
+
+export interface CreateEquipmentLoanRequest {
+    item_name: string;
+    due_date: Date;
+    member_id: string; // UUID
 export interface SportDTO {
     id: string;
     name: string;
