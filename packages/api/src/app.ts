@@ -39,6 +39,7 @@ import { CreatePaymentUseCase } from './application/CreatePaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/GetPaymentsUseCase.js';
 import { GetPaymentByIdUseCase } from './application/GetPaymentByIdUseCase.js';
 import { UpdatePaymentUseCase } from './application/UpdatePaymentUseCase.js';
+import { DeletePaymentUseCase } from './application/DeletePaymentUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
 
 import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
@@ -77,6 +78,7 @@ export function buildApp() {
     // Members
     // ==========================================
 
+    // ==========================================
     const memberRepo = new PostgresMemberRepository();
 
     const memberValidator = new MemberValidator(memberRepo);
@@ -85,8 +87,6 @@ export function buildApp() {
         memberRepo,
         memberValidator,
     );
-
-    const getMembersUseCase = new GetMembersUseCase(memberRepo);
 
     const updateMemberUseCase = new UpdateMemberUseCase(
         memberRepo,
@@ -355,11 +355,17 @@ export function buildApp() {
         paymentValidator,
     );
 
+    const deletePaymentUseCase = new DeletePaymentUseCase(
+        paymentRepository,
+        paymentValidator,
+    );
+
     const paymentController = new PaymentController(
         createPaymentUseCase,
         getPaymentsUseCase,
         getPaymentByIdUseCase,
         updatePaymentUseCase,
+        deletePaymentUseCase,
     );
 
     server.post(

@@ -7,5 +7,6 @@ export interface PaymentRepository {
     create(payment: Omit<PaymentDTO, 'id'>): Promise<PaymentDTO>;
     findAll(): Promise<PaymentDTO[]>;
     findById(id: string): Promise<PaymentDTO | null>;
+    delete(id: string): Promise<void>;
     update(id: string, data: UpdatePaymentRequest): Promise<PaymentDTO>;
 }

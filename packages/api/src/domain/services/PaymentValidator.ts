@@ -27,4 +27,11 @@ export class PaymentValidator {
             throw new Error('No se puede modificar un pago que fue anulado');
         }
     }
+
+    // TDD-0015: Validar idempotencia para la anulación
+    validateForCancel(currentStatus: PaymentStatus): void {
+        if (currentStatus === 'Paid') {
+            throw new Error('No se puede anular un pago ya procesado');
+        }
+    }
 }

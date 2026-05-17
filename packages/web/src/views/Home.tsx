@@ -59,6 +59,13 @@ export function HomeView() {
                     icon={LuShield}
                 />
 
+                <SectionCard
+                    title="Pagos"
+                    description="Gestiona las cuotas y obligaciones financieras de los socios."
+                    to="/payments"
+                    icon={LuShield}
+                />
+
                 {/* Future sections can be added here following the same pattern */}
                 <Box
                     p="6"
