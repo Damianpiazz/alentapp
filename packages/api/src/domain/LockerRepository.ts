@@ -11,4 +11,6 @@ export interface LockerRepository {
     findAll(): Promise<LockerDTO[]>;
 
     update(id: string, data: UpdateLockerRequest): Promise<LockerDTO>;
+
+    delete(id: string): Promise<void>;
 }
