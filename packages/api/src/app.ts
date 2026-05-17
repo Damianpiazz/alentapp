@@ -8,6 +8,7 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+
 import { PostgresEquipmentLoanRepository } from './infrastructure/PostgresEquipmentLoanRepository.js';
 import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator.js';
 import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
@@ -68,7 +69,9 @@ export function buildApp() {
 
     const memberRepo = new PostgresMemberRepository();
     const memberValidator = new MemberValidator(memberRepo);
+
     const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+
     const equipmentLoanValidator = new EquipmentLoanValidator(
         equipmentLoanRepo,
         memberRepo,
@@ -78,7 +81,6 @@ export function buildApp() {
         memberRepo,
         memberValidator,
     );
-    const getMembersUseCase = new GetMembersUseCase(memberRepo);
 
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
 
@@ -88,9 +90,11 @@ export function buildApp() {
     );
 
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+
     const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
         equipmentLoanRepo,
     );
+
     const newEquipmentLoanUseCase = new NewEquipmentLoanUseCase(
         equipmentLoanRepo,
         equipmentLoanValidator,
@@ -102,6 +106,7 @@ export function buildApp() {
         updateMemberUseCase,
         deleteMemberUseCase,
     );
+
     const equipmentLoanController = new EquipmentLoanController(
         newEquipmentLoanUseCase,
         getEquipmentLoanUseCase,
@@ -111,18 +116,22 @@ export function buildApp() {
         '/api/v1/socios',
         memberController.getAll.bind(memberController),
     );
+
     server.post(
         '/api/v1/socios',
         memberController.create.bind(memberController),
     );
+
     server.put(
         '/api/v1/socios/:id',
         memberController.update.bind(memberController),
     );
+
     server.delete(
         '/api/v1/socios/:id',
         memberController.delete.bind(memberController),
     );
+
     server.post(
         '/api/v1/prestamos',
         equipmentLoanController.create.bind(equipmentLoanController),
@@ -131,28 +140,6 @@ export function buildApp() {
     server.get(
         '/api/v1/prestamos',
         equipmentLoanController.getAll.bind(equipmentLoanController),
-    );
-
-    server.get('/', async (req, rep) => {
-
-    server.get(
-        '/api/v1/socios',
-        memberController.getAll.bind(memberController),
-    );
-
-    server.post(
-        '/api/v1/socios',
-        memberController.create.bind(memberController),
-    );
-
-    server.put(
-        '/api/v1/socios/:id',
-        memberController.update.bind(memberController),
-    );
-
-    server.delete(
-        '/api/v1/socios/:id',
-        memberController.delete.bind(memberController),
     );
 
     // =========================
@@ -251,21 +238,15 @@ export function buildApp() {
     );
 
     // =========================
-    // HEALTHCHECK
+    // PAYMENT
     // =========================
 
-    server.get('/', async (_req, rep) => {
-        rep.status(200).send({ msg: 'asd' });
-    });
-
-    // ==========================================
-    // PAYMENT
-    // ==========================================
-
     const paymentRepository = new PostgresPaymentRepository();
+
     const paymentValidator = new PaymentValidator();
 
     const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepository);
+
     const getPaymentByIdUseCase = new GetPaymentByIdUseCase(paymentRepository);
 
     const createPaymentUseCase = new CreatePaymentUseCase(
@@ -306,6 +287,14 @@ export function buildApp() {
         paymentController.update.bind(paymentController),
     );
 
+    // =========================
+    // HEALTHCHECK
+    // =========================
+
+    server.get('/', async (_req, rep) => {
+        rep.status(200).send({ msg: 'asd' });
+    });
+
     return server;
 }
 
@@ -314,8 +303,6 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
 
     const port = parseInt(process.env.PORT || '3000', 10);
 
-    server.listen({ port, host: '0.0.0.0' }, () =>
-        server.log.info(`API server running on http://localhost:${port}`),
     server.listen(
         {
             port,
