@@ -10,13 +10,15 @@ import {
     Input,
     Spinner,
     Center,
+    IconButton,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
 import { useEffect, useState, useMemo } from 'react';
 import { paymentsService } from '../services/payments';
 import { membersService } from '../services/members';
 import type {
     CreatePaymentRequest,
+    UpdatePaymentRequest,
     MemberDTO,
     PaymentDTO,
 } from '@alentapp/shared';
@@ -47,6 +49,14 @@ const monthsCollection = createListCollection({
     })),
 });
 
+const paymentStatusCollection = createListCollection({
+    items: [
+        { label: 'Pendiente', value: 'Pending' },
+        { label: 'Pagado', value: 'Paid' },
+        { label: 'Cancelado', value: 'Canceled' },
+    ],
+});
+
 export function PaymentsView() {
     const [payments, setPayments] = useState<PaymentDTO[]>([]);
     const [members, setMembers] = useState<MemberDTO[]>([]);
@@ -57,9 +67,14 @@ export function PaymentsView() {
     // Modal state
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingPaymentId, setEditingPaymentId] = useState<string | null>(
+        null,
+    );
 
     // Form state
-    const [formData, setFormData] = useState<CreatePaymentRequest>({
+    const [formData, setFormData] = useState<
+        CreatePaymentRequest & { status?: string }
+    >({
         amount: 0,
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
@@ -103,6 +118,7 @@ export function PaymentsView() {
     const openCreateModal = () => {
         setSuccessMsg(null);
         setError(null);
+        setEditingPaymentId(null);
         setFormData({
             amount: 0,
             month: new Date().getMonth() + 1,
@@ -113,17 +129,54 @@ export function PaymentsView() {
         setIsDialogOpen(true);
     };
 
+    const openEditModal = (payment: PaymentDTO) => {
+        setSuccessMsg(null);
+        setError(null);
+        setEditingPaymentId(payment.id);
+
+        // Formatear la fecha para el input type="date" (YYYY-MM-DD)
+        const formattedDate = payment.due_date
+            ? new Date(payment.due_date).toISOString().split('T')[0]
+            : '';
+
+        setFormData({
+            amount: payment.amount,
+            month: payment.month,
+            year: payment.year,
+            due_date: formattedDate,
+            member_id: payment.member_id,
+            status: payment.status,
+        });
+        setIsDialogOpen(true);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
         try {
-            await paymentsService.create(formData);
+            if (editingPaymentId) {
+                const updatePayload: UpdatePaymentRequest = {
+                    amount: formData.amount,
+                    status: formData.status as 'Paid' | 'Canceled' | undefined,
+                    payment_date:
+                        formData.status === 'Paid'
+                            ? new Date().toISOString().split('T')[0]
+                            : null,
+                };
+
+                await paymentsService.update(editingPaymentId, updatePayload);
+                setSuccessMsg('Pago actualizado correctamente');
+            } else {
+                await paymentsService.create(formData as CreatePaymentRequest);
+                setSuccessMsg('Pago registrado correctamente');
+            }
             setIsDialogOpen(false);
-            setSuccessMsg('Pago registrado correctamente');
+            setEditingPaymentId(null);
+            fetchPayments();
         } catch (error) {
             const err = error as Error;
-            setError(err.message || 'Error al generar el pago');
+            setError(err.message || 'Error al guardar el pago');
         } finally {
             setIsSubmitting(false);
         }
@@ -172,7 +225,11 @@ export function PaymentsView() {
                 <DialogContent>
                     <form onSubmit={handleSubmit}>
                         <DialogHeader>
-                            <DialogTitle>Generar Nuevo Pago</DialogTitle>
+                            <DialogTitle>
+                                {editingPaymentId
+                                    ? 'Editar Pago'
+                                    : 'Generar Nuevo Pago'}
+                            </DialogTitle>
                         </DialogHeader>
                         <DialogBody>
                             <Stack gap="4">
@@ -190,6 +247,7 @@ export function PaymentsView() {
                                                 member_id: e.value[0],
                                             })
                                         }
+                                        disabled={!!editingPaymentId}
                                     >
                                         <SelectTrigger>
                                             <SelectValueText placeholder="Seleccione un socio" />
@@ -241,6 +299,7 @@ export function PaymentsView() {
                                                     ),
                                                 })
                                             }
+                                            disabled={!!editingPaymentId}
                                         >
                                             <SelectTrigger>
                                                 <SelectValueText placeholder="Mes" />
@@ -275,6 +334,7 @@ export function PaymentsView() {
                                                 })
                                             }
                                             required
+                                            disabled={!!editingPaymentId}
                                         />
                                     </Field>
                                 </HStack>
@@ -290,8 +350,40 @@ export function PaymentsView() {
                                             })
                                         }
                                         required
+                                        disabled={!!editingPaymentId}
                                     />
                                 </Field>
+
+                                {editingPaymentId && formData.status && (
+                                    <Field label="Estado" required>
+                                        <SelectRoot
+                                            collection={paymentStatusCollection}
+                                            value={[formData.status]}
+                                            onValueChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    status: e.value[0],
+                                                })
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValueText placeholder="Seleccione el estado" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {paymentStatusCollection.items.map(
+                                                    (stat) => (
+                                                        <SelectItem
+                                                            item={stat}
+                                                            key={stat.value}
+                                                        >
+                                                            {stat.label}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </SelectRoot>
+                                    </Field>
+                                )}
                             </Stack>
                         </DialogBody>
                         <DialogFooter>
@@ -303,7 +395,9 @@ export function PaymentsView() {
                                 colorPalette="blue"
                                 loading={isSubmitting}
                             >
-                                Generar Pago
+                                {editingPaymentId
+                                    ? 'Guardar Cambios'
+                                    : 'Generar Pago'}
                             </Button>
                         </DialogFooter>
                         <DialogCloseTrigger />
@@ -381,7 +475,13 @@ export function PaymentsView() {
                                         Vencimiento
                                     </Table.ColumnHeader>
                                     <Table.ColumnHeader py="4">
+                                        Fecha de Pago
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader py="4">
                                         Estado
+                                    </Table.ColumnHeader>
+                                    <Table.ColumnHeader py="4" textAlign="end">
+                                        Acciones
                                     </Table.ColumnHeader>
                                 </Table.Row>
                             </Table.Header>
@@ -430,6 +530,20 @@ export function PaymentsView() {
                                                       ).toLocaleDateString()
                                                     : '-'}
                                             </Table.Cell>
+                                            <Table.Cell
+                                                color="fg.muted"
+                                                fontWeight={
+                                                    payment.status === 'Paid'
+                                                        ? 'bold'
+                                                        : 'normal'
+                                                }
+                                            >
+                                                {payment.payment_date
+                                                    ? new Date(
+                                                          payment.payment_date,
+                                                      ).toLocaleDateString()
+                                                    : '-'}
+                                            </Table.Cell>
                                             <Table.Cell>
                                                 <Box
                                                     display="inline-block"
@@ -443,6 +557,25 @@ export function PaymentsView() {
                                                 >
                                                     {payment.status}
                                                 </Box>
+                                            </Table.Cell>
+                                            <Table.Cell textAlign="end">
+                                                <HStack
+                                                    gap="2"
+                                                    justify="flex-end"
+                                                >
+                                                    <IconButton
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        aria-label="Editar pago"
+                                                        onClick={() =>
+                                                            openEditModal(
+                                                                payment,
+                                                            )
+                                                        }
+                                                    >
+                                                        <LuPencil />
+                                                    </IconButton>
+                                                </HStack>
                                             </Table.Cell>
                                         </Table.Row>
                                     );

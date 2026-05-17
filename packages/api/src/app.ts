@@ -35,6 +35,7 @@ import { PaymentValidator } from './domain/services/PaymentValidator.js';
 import { CreatePaymentUseCase } from './application/CreatePaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/GetPaymentsUseCase.js';
 import { GetPaymentByIdUseCase } from './application/GetPaymentByIdUseCase.js';
+import { UpdatePaymentUseCase } from './application/UpdatePaymentUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
 
 export function buildApp() {
@@ -205,21 +206,6 @@ export function buildApp() {
 
     const disciplineValidator = new DisciplineValidator(disciplineRepo);
 
-    server.get(
-        '/api/v1/socios',
-        memberController.getAll.bind(memberController),
-    );
-    server.post(
-        '/api/v1/socios',
-        memberController.create.bind(memberController),
-    );
-    server.put(
-        '/api/v1/socios/:id',
-        memberController.update.bind(memberController),
-    );
-    server.delete(
-        '/api/v1/socios/:id',
-        memberController.delete.bind(memberController),
     const createDisciplineUseCase = new CreateDisciplineUseCase(
         disciplineRepo,
         disciplineValidator,
@@ -288,10 +274,16 @@ export function buildApp() {
         paymentValidator,
     );
 
+    const updatePaymentUseCase = new UpdatePaymentUseCase(
+        paymentRepository,
+        paymentValidator,
+    );
+
     const paymentController = new PaymentController(
         createPaymentUseCase,
         getPaymentsUseCase,
         getPaymentByIdUseCase,
+        updatePaymentUseCase,
     );
 
     server.post(
@@ -307,6 +299,11 @@ export function buildApp() {
     server.get(
         '/api/v1/payments/:id',
         paymentController.getById.bind(paymentController),
+    );
+
+    server.put(
+        '/api/v1/payments/:id',
+        paymentController.update.bind(paymentController),
     );
 
     return server;
