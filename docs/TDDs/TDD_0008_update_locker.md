@@ -74,6 +74,18 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 4. **Adaptador de Salida**: `PostgresLockerRepository` (Actualización utilizando Prisma).
 5. **Adaptador de Entrada**: `LockerController` (Ruta HTTP que recibe el `id` y mapea errores a códigos HTTP).
 
+## Transiciones
+
+| Estado Actual | Estado Destino | Permitido |
+| ------------- | -------------- | --------- |
+| Disponible    | Ocupado        | Sí        |
+| Disponible    | Mantenimiento  | Sí        |
+| Ocupado       | Disponible     | Sí        |
+| Ocupado       | Mantenimiento  | No        |
+| Mantenimiento | Disponible     | Sí        |
+| Mantenimiento | Ocupado        | No        |
+
+
 ## Casos de Borde y Errores
 
 | Escenario                        | Resultado Esperado                                               | Código HTTP               |
