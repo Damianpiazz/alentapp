@@ -37,6 +37,14 @@ Permitir a los administrativos modificar la información de lockers existentes, 
 * El sistema no debe permitir asignar un locker en estado "Mantenimiento".
 * Si un locker se asigna a un socio, su estado debe pasar automáticamente a "Ocupado".
 * Si un locker queda sin socio asignado, su estado debe volver automáticamente a "Disponible".
+* Si un locker queda sin socio asignado, su estado debe volver automáticamente a `Disponible`.
+* El sistema debe validar que el socio exista antes de asignar el locker.
+* El sistema debe requerir un socio asignado cuando el estado sea `Ocupado`.
+* El sistema debe limpiar automáticamente fechas y socio cuando el locker vuelva a `Disponible`.
+* El sistema no debe permitir pasar un locker de `Mantenimiento` a `Ocupado` directamente.
+* El sistema no debe permitir pasar un locker de `Ocupado` a `Mantenimiento` sin liberar previamente el locker.
+* El sistema debe mantener el orden de los lockers en la grilla luego de editarse.
+* El sistema debe mostrar el DNI del socio asociado en lugar del UUID interno.
 * Si la edición es correcta, debe retornar los nuevos datos actualizados del locker.
 
 ## Diseño Técnico (RFC)
@@ -75,6 +83,14 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 | Fecha de vencimiento inválida    | Mensaje: "La fecha debe ser igual o posterior a la fecha actual" | 400 Bad Request           |
 | Locker en estado "Mantenimiento" | Mensaje: "El locker no se encuentra disponible"                  | 409 Conflict              |
 | Error de conexión a DB           | Mensaje: "Error interno, reintente más tarde"                    | 500 Internal Server Error |
+| Socio inexistente	                | Mensaje: "El socio no existe"	                                   | 404 Not Found             |
+| Locker ocupado sin fecha de       | Mensaje: "Debe ingresar una fecha de vencimiento"                | 400 Bad Request           |
+| vencimiento	                      |                                                                  |                           |
+| Fecha de vencimiento sin socio    | Mensaje: "No se puede asignar fecha sin socio"                   | 400 Bad Request           |
+| asignado		                      |                                                                  |                           |
+| Intento de pasar de Ocupado a     | Mensaje: "El locker no se encuentra disponible"                  | 409 Conflict              |
+| Mantenimiento	                    | 	                                                               |                           |
+| Error de conexión a DB	          | Mensaje: "Error interno, reintente más tarde"	                   |500 Internal Server Error  |
 
 ## Plan de Implementación
 
