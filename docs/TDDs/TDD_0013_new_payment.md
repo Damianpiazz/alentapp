@@ -39,6 +39,7 @@ Se definirá la entidad `Payment` con las siguientes propiedades y restricciones
 - `due_date`: Fecha de vencimiento (datetime).
 - `payment_date`: Fecha en la que se efectúa el cobro (datetime, nullable).
 - `member_id`: Identificador único universal (UUID) que actúa como clave foránea hacia el socio.
+- `deleted_at`: Fecha de baja lógica.
 
 ### Contrato de API (@alentapp/shared)
 

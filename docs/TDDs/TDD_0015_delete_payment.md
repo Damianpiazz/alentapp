@@ -12,7 +12,7 @@ titulo: Anulación de Pagos (Delete Lógico)
 
 ### Objetivo
 
-Dar de baja una obligación financiera generada por error o que ya no corresponde cobrar, garantizando que el registro original no se elimine de la base de datos para mantener el historial de auditoría.
+Dar de baja una obligación financiera generada por error, garantizando que el registro original no se elimine de la base de datos para mantener el historial de auditoría.
 
 ### User Persona
 
@@ -21,9 +21,8 @@ Dar de baja una obligación financiera generada por error o que ya no correspond
 
 ### Criterios de Aceptación
 
-- El sistema debe pedir una confirmación explícita (advertencia visual) antes de proceder con el borrado.
+- La baja lógica debe hacerse mediante el campo adicional deleted_at, asignándole la fecha y hora actual.
 - El sistema no debe permitir el borrado físico del registro bajo ninguna circunstancia.
-- Si el pago ya se encuentra en estado `Paid`, el sistema debe rechazar la anulación.
 
 ## Diseño Técnico (RFC)
 
@@ -31,7 +30,7 @@ Dar de baja una obligación financiera generada por error o que ya no correspond
 
 A fines prácticos y respetando las convenciones REST para borrados lógicos, la operación de anulación se realizará modificando el estado del recurso.
 
-- Endpoint: `PATCH /api/v1/payments/:id/cancel`
+- Endpoint: `DELETE /api/v1/payments/:id`
 - Request Body: `None`
 
 ### Componentes de Arquitectura Hexagonal
@@ -39,21 +38,20 @@ A fines prácticos y respetando las convenciones REST para borrados lógicos, la
 1. **Puerto**: `PaymentRepository` (por cuestión semántica, implementará el método `delete(id)`).
 2. **Servicio de Dominio**: `PaymentValidator` (encargado de verificar que el pago no esté en estado `Paid` previamente para evitar conflictos).
 3. **Caso de Uso**: `DeletePaymentUseCase` (orquesta la validación utilizando el `PaymentValidator` y llama al repositorio).
-4. **Adaptador de Salida**: `PostgresPaymentRepository` (el método `delete` del repositorio ejecutará en realidad un `update` de Prisma para cambiar el `status` a `Canceled`).
-5. **Adaptador de Entrada**: `PaymentController` (ruta HTTP `PATCH` que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
+4. **Adaptador de Salida**: `PostgresPaymentRepository` (el método `delete` del repositorio ejecutará en realidad un `update` de Prisma para setear el campo `deleted_at` con la fecha actual).
+5. **Adaptador de Entrada**: `PaymentController` (ruta HTTP `DELETE` que extrae el `id` de la URL y mapea excepciones a códigos HTTP).
 
 ## Casos de Borde y Errores
 
-| Escenario                        | Resultado Esperado                                              | Código HTTP            |
-| -------------------------------- | --------------------------------------------------------------- | ---------------------- |
-| El pago con el `id` no existe    | Mensaje: "El pago no existe"                                    | 404 Not Found          |
-| El pago ya está `Paid`           | Mensaje: "No se puede anular un pago ya procesado"              | 409 Conflict           |
-| Petición usando método `DELETE`  | Mensaje: "Operación no permitida. Use el endpoint de anulación" | 405 Method Not Allowed |
+| Escenario                     | Resultado Esperado                                 | Código HTTP   |
+| ----------------------------- | -------------------------------------------------- | ------------- |
+| El pago con el `id` no existe | Mensaje: "El pago no existe"                       | 404 Not Found |
+| El pago ya está `Paid`        | Mensaje: "No se puede anular un pago ya procesado" | 409 Conflict  |
 
 ## Plan de Implementación
 
 1. Actualizar las interfaces en el paquete `@alentapp/shared` si fuera necesario.
 2. Ampliar el `PaymentRepository` con el método semántico `delete`.
 3. Implementar la lógica en `DeletePaymentUseCase` utilizando el `PaymentValidator` centralizado.
-4. Crear la ruta `PATCH /api/v1/payments/:id/cancel` en `PaymentController`.
+4. Crear la ruta `DELETE /api/v1/payments/:id/cancel` en `PaymentController`.
 5. Consumir el endpoint desde el frontend y agregar un botón de anulación en la tabla de pagos.
