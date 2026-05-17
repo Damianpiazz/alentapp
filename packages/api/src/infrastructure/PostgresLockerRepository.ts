@@ -26,13 +26,13 @@ export class PostgresLockerRepository implements LockerRepository {
 
                 location: this.mapLocation(locker.location),
 
-                status: this.mapStatus(locker.status),
+                status: LockerStatus.DISPONIBLE,
 
-                member_id: locker.member_id,
+                member_id: null,
 
-                contract_finish_date: locker.contract_finish_date
-                    ? new Date(locker.contract_finish_date)
-                    : null,
+                contract_start_date: null,
+
+                contract_finish_date: null,
             },
         });
 
@@ -80,7 +80,9 @@ export class PostgresLockerRepository implements LockerRepository {
             contract_finish_date:
                 locker.contract_finish_date?.toISOString() ?? null,
 
-            contract_start_date: locker.contract_start_date.toISOString(),
+            contract_start_date: locker.contract_start_date
+                ? locker.contract_start_date.toISOString()
+                : null,
         };
     }
 
@@ -111,15 +113,15 @@ export class PostgresLockerRepository implements LockerRepository {
     }
 
     private mapStatus(status?: string): LockerStatus {
-        if (status === 'Disponible') {
-            return LockerStatus.DISPONIBLE;
-        }
-
         if (status === 'Ocupado') {
             return LockerStatus.OCUPADO;
         }
 
-        return LockerStatus.MANTENIMIENTO;
+        if (status === 'Mantenimiento') {
+            return LockerStatus.MANTENIMIENTO;
+        }
+
+        return LockerStatus.DISPONIBLE;
     }
 
     private unmapStatus(

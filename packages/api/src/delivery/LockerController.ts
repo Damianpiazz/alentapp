@@ -24,9 +24,11 @@ export class LockerController {
             return rep.send({
                 data: lockers,
             });
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as Error;
+
             return rep.status(500).send({
-                error: 'Error al obtener lockers',
+                error: err.message || 'Error al obtener lockers',
             });
         }
     }
@@ -44,9 +46,11 @@ export class LockerController {
             return rep.status(201).send({
                 data: locker,
             });
-        } catch (error: any) {
+        } catch (error) {
+            const err = error as Error;
+
             return rep.status(400).send({
-                error: error.message,
+                error: err.message,
             });
         }
     }
