@@ -79,21 +79,9 @@ export function buildApp() {
 
     const memberValidator = new MemberValidator(memberRepo);
 
-    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
-
-    const equipmentLoanValidator = new EquipmentLoanValidator(
-        equipmentLoanRepo,
-        memberRepo,
-    );
-
     const createMemberUseCase = new CreateMemberUseCase(
         memberRepo,
         memberValidator,
-    );
-    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
-    const equipmentLoanValidator = new EquipmentLoanValidator(
-        equipmentLoanRepo,
-        memberRepo,
     );
 
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
@@ -104,6 +92,17 @@ export function buildApp() {
     );
 
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+
+    // ==========================================
+    // Equipment Loans
+    // ==========================================
+
+    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+
+    const equipmentLoanValidator = new EquipmentLoanValidator(
+        equipmentLoanRepo,
+        memberRepo,
+    );
 
     const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
         equipmentLoanRepo,
@@ -149,7 +148,7 @@ export function buildApp() {
     // ==========================================
     // Member Routes
     // ==========================================
-    );
+
     const equipmentLoanController = new EquipmentLoanController(
         newEquipmentLoanUseCase,
         getEquipmentLoanUseCase,
@@ -192,28 +191,6 @@ export function buildApp() {
     server.delete(
         '/api/v1/prestamos/:id',
         equipmentLoanController.delete.bind(equipmentLoanController),
-    );
-
-    server.get('/', async (req, rep) => {
-
-    server.get(
-        '/api/v1/socios',
-        memberController.getAll.bind(memberController),
-    );
-
-    server.post(
-        '/api/v1/socios',
-        memberController.create.bind(memberController),
-    );
-
-    server.put(
-        '/api/v1/socios/:id',
-        memberController.update.bind(memberController),
-    );
-
-    server.delete(
-        '/api/v1/socios/:id',
-        memberController.delete.bind(memberController),
     );
 
     // rutas del locker
@@ -392,7 +369,7 @@ export function buildApp() {
     // =========================
 
     server.get('/', async (_req, rep) => {
-        rep.status(200).send({ msg: 'asd' });
+        rep.status(200).send({ msg: 'ok' });
     });
 
     return server;
