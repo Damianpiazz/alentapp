@@ -8,6 +8,7 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+
 import { PostgresEquipmentLoanRepository } from './infrastructure/PostgresEquipmentLoanRepository.js';
 import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator.js';
 import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
@@ -75,7 +76,9 @@ export function buildApp() {
     const memberRepo = new PostgresMemberRepository();
 
     const memberValidator = new MemberValidator(memberRepo);
+
     const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+
     const equipmentLoanValidator = new EquipmentLoanValidator(
         equipmentLoanRepo,
         memberRepo,
@@ -94,9 +97,11 @@ export function buildApp() {
     );
 
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+
     const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
         equipmentLoanRepo,
     );
+
     const newEquipmentLoanUseCase = new NewEquipmentLoanUseCase(
         equipmentLoanRepo,
         equipmentLoanValidator,
@@ -140,18 +145,22 @@ export function buildApp() {
         '/api/v1/socios',
         memberController.getAll.bind(memberController),
     );
+
     server.post(
         '/api/v1/socios',
         memberController.create.bind(memberController),
     );
+
     server.put(
         '/api/v1/socios/:id',
         memberController.update.bind(memberController),
     );
+
     server.delete(
         '/api/v1/socios/:id',
         memberController.delete.bind(memberController),
     );
+
     server.post(
         '/api/v1/prestamos',
         equipmentLoanController.create.bind(equipmentLoanController),
@@ -306,21 +315,15 @@ export function buildApp() {
     );
 
     // =========================
-    // HEALTHCHECK
+    // PAYMENT
     // =========================
 
-    server.get('/', async (_req, rep) => {
-        rep.status(200).send({ msg: 'asd' });
-    });
-
-    // ==========================================
-    // PAYMENT
-    // ==========================================
-
     const paymentRepository = new PostgresPaymentRepository();
+
     const paymentValidator = new PaymentValidator();
 
     const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepository);
+
     const getPaymentByIdUseCase = new GetPaymentByIdUseCase(paymentRepository);
 
     const createPaymentUseCase = new CreatePaymentUseCase(
@@ -360,6 +363,14 @@ export function buildApp() {
         '/api/v1/payments/:id',
         paymentController.update.bind(paymentController),
     );
+
+    // =========================
+    // HEALTHCHECK
+    // =========================
+
+    server.get('/', async (_req, rep) => {
+        rep.status(200).send({ msg: 'asd' });
+    });
 
     return server;
 }
