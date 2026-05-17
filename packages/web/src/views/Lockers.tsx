@@ -200,6 +200,24 @@ export function LockersView() {
         }
     };
 
+    const handleDeleteLocker = async (id: string) => {
+        const confirmed = window.confirm('¿Desea liberar el locker?');
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await lockersService.delete(id);
+
+            await fetchLockers();
+        } catch (error) {
+            const err = error as Error;
+
+            alert(err.message);
+        }
+    };
+
     useEffect(() => {
         const load = async () => {
             await fetchLockers();
@@ -563,6 +581,9 @@ export function LockersView() {
                                             <Table.Cell>
                                                 <Button
                                                     size="sm"
+                                                    ml="2"
+                                                    variant="outline"
+                                                    colorPalette="blue"
                                                     variant="outline"
                                                     onClick={() =>
                                                         openEditModal(locker)
@@ -571,6 +592,23 @@ export function LockersView() {
                                                     <LuPencil />
                                                     Editar
                                                 </Button>
+
+                                                {locker.status ===
+                                                    'Ocupado' && (
+                                                    <Button
+                                                        size="sm"
+                                                        ml="2"
+                                                        variant="outline"
+                                                        colorPalette="red"
+                                                        onClick={() =>
+                                                            handleDeleteLocker(
+                                                                locker.id,
+                                                            )
+                                                        }
+                                                    >
+                                                        Liberar
+                                                    </Button>
+                                                )}
                                             </Table.Cell>
                                         </Table.Row>
                                     ))}

@@ -10,6 +10,8 @@ import { UpdateLockerUseCase } from '../application/UpdateLockerUseCase.js';
 
 import { UpdateLockerRequest } from '@alentapp/shared';
 
+import { DeleteLockerUseCase } from '../application/DeleteLockerUseCase.js';
+
 export class LockerController {
     constructor(
         private readonly createLockerUseCase: CreateLockerUseCase,
@@ -17,6 +19,8 @@ export class LockerController {
         private readonly getLockersUseCase: GetLockersUseCase,
 
         private readonly updateLockerUseCase: UpdateLockerUseCase,
+
+        private readonly deleteLockerUseCase: DeleteLockerUseCase,
     ) {}
 
     async getAll(
@@ -145,6 +149,40 @@ export class LockerController {
 
             if (err.message === 'Ingrese un DNI correcto') {
                 return rep.status(400).send({
+                    error: err.message,
+                });
+            }
+
+            return rep.status(500).send({
+                error: 'Error interno, reintente más tarde',
+            });
+        }
+    }
+
+    async delete(
+        req: FastifyRequest<{
+            Params: {
+                id: string;
+            };
+        }>,
+
+        rep: FastifyReply,
+    ) {
+        try {
+            await this.deleteLockerUseCase.execute(req.params.id);
+
+            return rep.status(204).send();
+        } catch (error) {
+            const err = error as Error;
+
+            if (err.message === 'El locker no existe') {
+                return rep.status(404).send({
+                    error: err.message,
+                });
+            }
+
+            if (err.message === 'El locker ya se encuentra disponible') {
+                return rep.status(409).send({
                     error: err.message,
                 });
             }
