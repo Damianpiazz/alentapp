@@ -314,141 +314,172 @@ export function LockersView() {
                                         </SelectContent>
                                     </SelectRoot>
                                 </Field>
-
-                                <Field label="Estado">
-                                    <SelectRoot
-                                        disabled={
-                                            editingLocker?.status === 'Ocupado'
-                                        }
-                                        collection={statuses}
-                                        value={[
-                                            formData.status || 'Disponible',
-                                        ]}
-                                        onValueChange={(e) => {
-                                            const nextStatus = e
-                                                .value[0] as LockerStatus;
-
-                                            if (nextStatus !== 'Ocupado') {
-                                                setFormData({
-                                                    ...formData,
-
-                                                    status: nextStatus,
-
-                                                    member_id: null,
-
-                                                    contract_finish_date: null,
-                                                });
-
-                                                return;
-                                            }
-
-                                            setFormData({
-                                                ...formData,
-
-                                                status: nextStatus,
-                                            });
-                                        }}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValueText placeholder="Seleccione estado" />
-                                        </SelectTrigger>
-
-                                        <SelectContent>
-                                            {statuses.items
-                                                .filter((status) => {
-                                                    if (!editingLocker) {
-                                                        return true;
-                                                    }
-
-                                                    if (
-                                                        editingLocker.status ===
-                                                        'Mantenimiento'
-                                                    ) {
-                                                        return (
-                                                            status.value !==
-                                                            'Ocupado'
-                                                        );
-                                                    }
-
-                                                    if (
-                                                        editingLocker.status ===
-                                                        'Ocupado'
-                                                    ) {
-                                                        return (
-                                                            status.value !==
-                                                                'Mantenimiento' &&
-                                                            status.value !==
-                                                                'Disponible'
-                                                        );
-                                                    }
-
-                                                    return true;
-                                                })
-                                                .map((status) => (
-                                                    <SelectItem
-                                                        item={status}
-                                                        key={status.value}
-                                                    >
-                                                        {status.label}
-                                                    </SelectItem>
-                                                ))}
-                                        </SelectContent>
-                                    </SelectRoot>
-                                </Field>
-
-                                {formData.status === 'Ocupado' && (
+                                {editingLocker && (
                                     <>
-                                        <Field label="DNI del socio">
-                                            <Input
-                                                placeholder="Ej. 12345678"
-                                                value={formData.member_id || ''}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        member_id:
-                                                            e.target.value ||
-                                                            null,
-                                                    })
+                                        <Field label="Estado">
+                                            <SelectRoot
+                                                disabled={
+                                                    editingLocker?.status ===
+                                                    'Ocupado'
                                                 }
-                                            />
-                                        </Field>
+                                                collection={statuses}
+                                                value={[
+                                                    formData.status ||
+                                                        'Disponible',
+                                                ]}
+                                                onValueChange={(e) => {
+                                                    const nextStatus = e
+                                                        .value[0] as LockerStatus;
 
-                                        <Field label="Fecha Fin Contrato">
-                                            <Input
-                                                placeholder="dd/mm/aaaa"
-                                                value={
-                                                    formData.contract_finish_date ||
-                                                    ''
-                                                }
-                                                onChange={(e) => {
-                                                    let value =
-                                                        e.target.value.replace(
-                                                            /\D/g,
-                                                            '',
-                                                        );
+                                                    if (
+                                                        nextStatus !== 'Ocupado'
+                                                    ) {
+                                                        setFormData({
+                                                            ...formData,
 
-                                                    if (value.length > 2) {
-                                                        value =
-                                                            value.slice(0, 2) +
-                                                            '/' +
-                                                            value.slice(2);
-                                                    }
+                                                            status: nextStatus,
 
-                                                    if (value.length > 5) {
-                                                        value =
-                                                            value.slice(0, 5) +
-                                                            '/' +
-                                                            value.slice(5, 9);
+                                                            member_id: null,
+
+                                                            contract_finish_date:
+                                                                null,
+                                                        });
+
+                                                        return;
                                                     }
 
                                                     setFormData({
                                                         ...formData,
-                                                        contract_finish_date:
-                                                            value,
+
+                                                        status: nextStatus,
                                                     });
                                                 }}
-                                            />
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValueText placeholder="Seleccione estado" />
+                                                </SelectTrigger>
+
+                                                <SelectContent>
+                                                    {statuses.items
+                                                        .filter((status) => {
+                                                            if (
+                                                                !editingLocker
+                                                            ) {
+                                                                return true;
+                                                            }
+
+                                                            if (
+                                                                editingLocker.status ===
+                                                                'Mantenimiento'
+                                                            ) {
+                                                                return (
+                                                                    status.value !==
+                                                                    'Ocupado'
+                                                                );
+                                                            }
+
+                                                            if (
+                                                                editingLocker.status ===
+                                                                'Ocupado'
+                                                            ) {
+                                                                return (
+                                                                    status.value !==
+                                                                        'Mantenimiento' &&
+                                                                    status.value !==
+                                                                        'Disponible'
+                                                                );
+                                                            }
+
+                                                            return true;
+                                                        })
+                                                        .map((status) => (
+                                                            <SelectItem
+                                                                item={status}
+                                                                key={
+                                                                    status.value
+                                                                }
+                                                            >
+                                                                {status.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                </SelectContent>
+                                            </SelectRoot>
                                         </Field>
+
+                                        {formData.status === 'Ocupado' && (
+                                            <>
+                                                <Field label="DNI del socio">
+                                                    <Input
+                                                        placeholder="Ej. 12345678"
+                                                        value={
+                                                            formData.member_id ||
+                                                            ''
+                                                        }
+                                                        onChange={(e) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                member_id:
+                                                                    e.target
+                                                                        .value ||
+                                                                    null,
+                                                            })
+                                                        }
+                                                    />
+                                                </Field>
+
+                                                <Field label="Fecha Fin Contrato">
+                                                    <Input
+                                                        placeholder="dd/mm/aaaa"
+                                                        value={
+                                                            formData.contract_finish_date ||
+                                                            ''
+                                                        }
+                                                        onChange={(e) => {
+                                                            let value =
+                                                                e.target.value.replace(
+                                                                    /\D/g,
+                                                                    '',
+                                                                );
+
+                                                            if (
+                                                                value.length > 2
+                                                            ) {
+                                                                value =
+                                                                    value.slice(
+                                                                        0,
+                                                                        2,
+                                                                    ) +
+                                                                    '/' +
+                                                                    value.slice(
+                                                                        2,
+                                                                    );
+                                                            }
+
+                                                            if (
+                                                                value.length > 5
+                                                            ) {
+                                                                value =
+                                                                    value.slice(
+                                                                        0,
+                                                                        5,
+                                                                    ) +
+                                                                    '/' +
+                                                                    value.slice(
+                                                                        5,
+                                                                        9,
+                                                                    );
+                                                            }
+
+                                                            setFormData({
+                                                                ...formData,
+                                                                contract_finish_date:
+                                                                    value,
+                                                            });
+                                                        }}
+                                                    />
+                                                </Field>
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </Stack>
@@ -518,58 +549,68 @@ export function LockersView() {
                             </Table.Header>
 
                             <Table.Body>
-                                {lockers.map((locker) => (
-                                    <Table.Row key={locker.id}>
-                                        <Table.Cell>{locker.number}</Table.Cell>
+                                {lockers
+                                    .sort(
+                                        (a, b) =>
+                                            Number(a.number) - Number(b.number),
+                                    )
+                                    .map((locker) => (
+                                        <Table.Row key={locker.id}>
+                                            <Table.Cell>
+                                                {locker.number}
+                                            </Table.Cell>
 
-                                        <Table.Cell>
-                                            {locker.location}
-                                        </Table.Cell>
+                                            <Table.Cell>
+                                                {locker.location}
+                                            </Table.Cell>
 
-                                        <Table.Cell>{locker.status}</Table.Cell>
+                                            <Table.Cell>
+                                                {locker.status}
+                                            </Table.Cell>
 
-                                        <Table.Cell>
-                                            {locker.contract_finish_date
-                                                ? locker.contract_finish_date
-                                                      .split('T')[0]
-                                                      .split('-')
-                                                      .reverse()
-                                                      .join('/')
-                                                : '-'}
-                                        </Table.Cell>
+                                            <Table.Cell>
+                                                {locker.contract_finish_date
+                                                    ? locker.contract_finish_date
+                                                          .split('T')[0]
+                                                          .split('-')
+                                                          .reverse()
+                                                          .join('/')
+                                                    : '-'}
+                                            </Table.Cell>
 
-                                        <Table.Cell>
-                                            <Button
-                                                size="sm"
-                                                ml="2"
-                                                variant="outline"
-                                                colorPalette="blue"
-                                                onClick={() =>
-                                                    openEditModal(locker)
-                                                }
-                                            >
-                                                <LuPencil />
-                                                Editar
-                                            </Button>
-
-                                            {locker.status === 'Ocupado' && (
+                                            <Table.Cell>
                                                 <Button
                                                     size="sm"
                                                     ml="2"
                                                     variant="outline"
-                                                    colorPalette="red"
+                                                    colorPalette="blue"
                                                     onClick={() =>
-                                                        handleDeleteLocker(
-                                                            locker.id,
-                                                        )
+                                                        openEditModal(locker)
                                                     }
                                                 >
-                                                    Liberar
+                                                    <LuPencil />
+                                                    Editar
                                                 </Button>
-                                            )}
-                                        </Table.Cell>
-                                    </Table.Row>
-                                ))}
+
+                                                {locker.status ===
+                                                    'Ocupado' && (
+                                                    <Button
+                                                        size="sm"
+                                                        ml="2"
+                                                        variant="outline"
+                                                        colorPalette="red"
+                                                        onClick={() =>
+                                                            handleDeleteLocker(
+                                                                locker.id,
+                                                            )
+                                                        }
+                                                    >
+                                                        Liberar
+                                                    </Button>
+                                                )}
+                                            </Table.Cell>
+                                        </Table.Row>
+                                    ))}
                             </Table.Body>
                         </Table.Root>
                     )}
