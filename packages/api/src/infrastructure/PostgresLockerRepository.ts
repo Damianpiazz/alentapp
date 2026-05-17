@@ -117,6 +117,24 @@ export class PostgresLockerRepository implements LockerRepository {
         return this.mapToDTO(updated);
     }
 
+    async delete(id: string): Promise<void> {
+        await prisma.locker.update({
+            where: {
+                id,
+            },
+
+            data: {
+                status: LockerStatus.DISPONIBLE,
+
+                member_id: null,
+
+                contract_finish_date: null,
+
+                contract_start_date: null,
+            },
+        });
+    }
+
     private mapToDTO(
         locker: Locker & {
             member?: {
