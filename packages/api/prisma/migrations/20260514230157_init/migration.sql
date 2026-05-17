@@ -1,0 +1,18 @@
+-- CreateEnum
+CREATE TYPE "EquipmentLoanStatus" AS ENUM ('Loaned', 'Returned', 'Demaged');
+
+-- CreateTable
+CREATE TABLE "equipment_loans" (
+    "id" TEXT NOT NULL,
+    "item_name" TEXT NOT NULL,
+    "status" "EquipmentLoanStatus" NOT NULL DEFAULT 'Loaned',
+    "loan_date" TIMESTAMP(3) NOT NULL,
+    "due_date" TIMESTAMP(3) NOT NULL,
+    "member_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "equipment_loans_pkey" PRIMARY KEY ("id")
+);
+
+-- AddForeignKey
+ALTER TABLE "equipment_loans" ADD CONSTRAINT "equipment_loans_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

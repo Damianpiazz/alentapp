@@ -9,6 +9,36 @@ import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
 
+import { PostgresEquipmentLoanRepository } from './infrastructure/PostgresEquipmentLoanRepository.js';
+import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator.js';
+import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
+import { GetEquipmentLoanUseCase } from './application/GetEquipmentLoanUseCase.js';
+import { EquipmentLoanController } from './delivery/EquipmentLoanController.js';
+
+import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
+import { SportValidator } from './domain/services/SportValidator.js';
+import { GetSportsUseCase } from './application/GetSportsUseCase.js';
+import { CreateSportUseCase } from './application/CreateSportUseCase.js';
+import { UpdateSportUseCase } from './application/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from './application/DeleteSportUseCase.js';
+import { SportController } from './delivery/SportController.js';
+
+import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
+import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
+import { GetDisciplinesUseCase } from './application/GetDisciplinesUseCase.js';
+import { UpdateDisciplineUseCase } from './application/UpdateDisciplineUseCase.js';
+import { DeleteDisciplineUseCase } from './application/DeleteDisciplineUseCase.js';
+import { DisciplineController } from './delivery/DisciplineController.js';
+import { DisciplineValidator } from './domain/services/DisciplineValidator.js';
+
+import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
+import { PaymentValidator } from './domain/services/PaymentValidator.js';
+import { CreatePaymentUseCase } from './application/CreatePaymentUseCase.js';
+import { GetPaymentsUseCase } from './application/GetPaymentsUseCase.js';
+import { GetPaymentByIdUseCase } from './application/GetPaymentByIdUseCase.js';
+import { UpdatePaymentUseCase } from './application/UpdatePaymentUseCase.js';
+import { PaymentController } from './delivery/PaymentController.js';
+
 import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
 import { LockerValidator } from './domain/services/LockerValidator.js';
 import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
@@ -48,6 +78,13 @@ export function buildApp() {
 
     const memberValidator = new MemberValidator(memberRepo);
 
+    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+
+    const equipmentLoanValidator = new EquipmentLoanValidator(
+        equipmentLoanRepo,
+        memberRepo,
+    );
+
     const createMemberUseCase = new CreateMemberUseCase(
         memberRepo,
         memberValidator,
@@ -61,6 +98,15 @@ export function buildApp() {
     );
 
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+
+    const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
+        equipmentLoanRepo,
+    );
+
+    const newEquipmentLoanUseCase = new NewEquipmentLoanUseCase(
+        equipmentLoanRepo,
+        equipmentLoanValidator,
+    );
 
     const memberController = new MemberController(
         createMemberUseCase,
@@ -96,6 +142,43 @@ export function buildApp() {
     // ==========================================
     // Member Routes
     // ==========================================
+    );
+    const equipmentLoanController = new EquipmentLoanController(
+        newEquipmentLoanUseCase,
+        getEquipmentLoanUseCase,
+    );
+
+    server.get(
+        '/api/v1/socios',
+        memberController.getAll.bind(memberController),
+    );
+
+    server.post(
+        '/api/v1/socios',
+        memberController.create.bind(memberController),
+    );
+
+    server.put(
+        '/api/v1/socios/:id',
+        memberController.update.bind(memberController),
+    );
+
+    server.delete(
+        '/api/v1/socios/:id',
+        memberController.delete.bind(memberController),
+    );
+
+    server.post(
+        '/api/v1/prestamos',
+        equipmentLoanController.create.bind(equipmentLoanController),
+    );
+
+    server.get(
+        '/api/v1/prestamos',
+        equipmentLoanController.getAll.bind(equipmentLoanController),
+    );
+
+    server.get('/', async (req, rep) => {
 
     server.get(
         '/api/v1/socios',
@@ -149,6 +232,159 @@ export function buildApp() {
         });
     });
     console.log(server.printRoutes());
+    // =========================
+    // SPORTS
+    // =========================
+
+    const sportRepo = new PostgresSportRepository();
+
+    const sportValidator = new SportValidator(sportRepo);
+
+    const getSportsUseCase = new GetSportsUseCase(sportRepo);
+
+    const createSportUseCase = new CreateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
+
+    const updateSportUseCase = new UpdateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
+
+    const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
+
+    const sportController = new SportController(
+        getSportsUseCase,
+        createSportUseCase,
+        updateSportUseCase,
+        deleteSportUseCase,
+    );
+
+    server.get('/api/v1/sports', sportController.getAll.bind(sportController));
+
+    server.post('/api/v1/sports', sportController.create.bind(sportController));
+
+    server.put(
+        '/api/v1/sports/:id',
+        sportController.update.bind(sportController),
+    );
+
+    server.delete(
+        '/api/v1/sports/:id',
+        sportController.delete.bind(sportController),
+    );
+
+    // =========================
+    // DISCIPLINES
+    // =========================
+
+    const disciplineRepo = new PostgresDisciplineRepository();
+
+    const disciplineValidator = new DisciplineValidator(disciplineRepo);
+
+    const createDisciplineUseCase = new CreateDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
+    const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
+
+    const updateDisciplineUseCase = new UpdateDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
+    const deleteDisciplineUseCase = new DeleteDisciplineUseCase(
+        disciplineRepo,
+        disciplineValidator,
+    );
+
+    const disciplineController = new DisciplineController(
+        createDisciplineUseCase,
+        getDisciplinesUseCase,
+        updateDisciplineUseCase,
+        deleteDisciplineUseCase,
+    );
+
+    server.get(
+        '/api/v1/disciplines',
+        disciplineController.getAll.bind(disciplineController),
+    );
+
+    server.post(
+        '/api/v1/disciplines',
+        disciplineController.create.bind(disciplineController),
+    );
+
+    server.put(
+        '/api/v1/disciplines/:id',
+        disciplineController.update.bind(disciplineController),
+    );
+
+    server.delete(
+        '/api/v1/disciplines/:id',
+        disciplineController.delete.bind(disciplineController),
+    );
+
+    // =========================
+    // PAYMENT
+    // =========================
+
+    const paymentRepository = new PostgresPaymentRepository();
+
+    const paymentValidator = new PaymentValidator();
+
+    const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepository);
+
+    const getPaymentByIdUseCase = new GetPaymentByIdUseCase(paymentRepository);
+
+    const createPaymentUseCase = new CreatePaymentUseCase(
+        paymentRepository,
+        memberRepo,
+        paymentValidator,
+    );
+
+    const updatePaymentUseCase = new UpdatePaymentUseCase(
+        paymentRepository,
+        paymentValidator,
+    );
+
+    const paymentController = new PaymentController(
+        createPaymentUseCase,
+        getPaymentsUseCase,
+        getPaymentByIdUseCase,
+        updatePaymentUseCase,
+    );
+
+    server.post(
+        '/api/v1/payments',
+        paymentController.create.bind(paymentController),
+    );
+
+    server.get(
+        '/api/v1/payments',
+        paymentController.getAll.bind(paymentController),
+    );
+
+    server.get(
+        '/api/v1/payments/:id',
+        paymentController.getById.bind(paymentController),
+    );
+
+    server.put(
+        '/api/v1/payments/:id',
+        paymentController.update.bind(paymentController),
+    );
+
+    // =========================
+    // HEALTHCHECK
+    // =========================
+
+    server.get('/', async (_req, rep) => {
+        rep.status(200).send({ msg: 'asd' });
+    });
+
     return server;
 }
 
