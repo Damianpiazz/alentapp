@@ -32,6 +32,12 @@ export function HomeView() {
                     icon={LuUsers}
                 />
                 <SectionCard
+                    title="Lockers"
+                    description="Administra los lockers y casilleros disponibles del club."
+                    to="/lockers"
+                    icon={LuBox}
+                />
+
                     title="Préstamos"
                     description="Gestiona los préstamos de equipos, sus plazos y estados de devolución."
                     to="/loans"

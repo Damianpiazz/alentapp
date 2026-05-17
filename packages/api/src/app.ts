@@ -39,6 +39,12 @@ import { GetPaymentByIdUseCase } from './application/GetPaymentByIdUseCase.js';
 import { UpdatePaymentUseCase } from './application/UpdatePaymentUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
 
+import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
+import { LockerValidator } from './domain/services/LockerValidator.js';
+import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
+import { GetLockersUseCase } from './application/GetLockersUseCase.js';
+import { LockerController } from './delivery/LockerController.js';
+
 export function buildApp() {
     const server = Fastify({
         logger: {
@@ -64,10 +70,11 @@ export function buildApp() {
     });
 
     // ==========================================
-    // MEMBER
+    // Members
     // ==========================================
 
     const memberRepo = new PostgresMemberRepository();
+
     const memberValidator = new MemberValidator(memberRepo);
 
     const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
@@ -107,6 +114,28 @@ export function buildApp() {
         deleteMemberUseCase,
     );
 
+    // lockers
+
+    const lockerRepo = new PostgresLockerRepository();
+
+    const lockerValidator = new LockerValidator(lockerRepo);
+
+    const createLockerUseCase = new CreateLockerUseCase(
+        lockerRepo,
+        lockerValidator,
+    );
+
+    const getLockersUseCase = new GetLockersUseCase(lockerRepo);
+
+    const lockerController = new LockerController(
+        createLockerUseCase,
+        getLockersUseCase,
+    );
+
+    // ==========================================
+    // Member Routes
+    // ==========================================
+    );
     const equipmentLoanController = new EquipmentLoanController(
         newEquipmentLoanUseCase,
         getEquipmentLoanUseCase,
@@ -142,6 +171,54 @@ export function buildApp() {
         equipmentLoanController.getAll.bind(equipmentLoanController),
     );
 
+    server.get('/', async (req, rep) => {
+
+    server.get(
+        '/api/v1/socios',
+        memberController.getAll.bind(memberController),
+    );
+
+    server.post(
+        '/api/v1/socios',
+        memberController.create.bind(memberController),
+    );
+
+    server.put(
+        '/api/v1/socios/:id',
+        memberController.update.bind(memberController),
+    );
+
+    server.delete(
+        '/api/v1/socios/:id',
+        memberController.delete.bind(memberController),
+    );
+
+    // rutas del locker
+
+    server.get(
+        '/api/v1/lockers',
+        lockerController.getAll.bind(lockerController),
+    );
+
+    server.post(
+        '/api/v1/lockers',
+        lockerController.create.bind(lockerController),
+    );
+
+    server.get('/test-lockers', async () => {
+        return {
+            ok: true,
+        };
+    });
+
+    console.log('LOCKER ROUTES REGISTERED');
+
+    server.get('/', async (req, rep) => {
+        rep.status(200).send({
+            msg: 'asd',
+        });
+    });
+    console.log(server.printRoutes());
     // =========================
     // SPORTS
     // =========================
@@ -308,12 +385,14 @@ if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
             port,
             host: '0.0.0.0',
         },
+
         () => server.log.info(`API server running on http://localhost:${port}`),
     );
 
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
         process.on(signal, async () => {
             await server.close();
+
             process.exit(0);
         });
     });

@@ -33,6 +33,38 @@ export interface UpdateMemberRequest {
 }
 
 // ==========================================
+// Locker
+// ==========================================
+
+export type LockerLocation =
+    | 'Vestuario Masculino'
+    | 'Vestuario Femenino'
+    | 'Niños';
+
+export type LockerStatus = 'Disponible' | 'Ocupado' | 'Mantenimiento';
+
+export interface LockerDTO {
+    id: string;
+
+    number: string;
+
+    location: LockerLocation;
+
+    status: LockerStatus;
+
+    member_id?: string | null;
+
+    contract_finish_date?: string | null;
+
+    contract_start_date: string | null;
+}
+
+export interface CreateLockerRequest {
+    number: string;
+
+    location: LockerLocation;
+}
+
 // EquipmentLoan
 // ==========================================
 
@@ -51,6 +83,8 @@ export interface CreateEquipmentLoanRequest {
     item_name: string;
     due_date: Date;
     member_id: string; // UUID
+}
+
 export interface SportDTO {
     id: string;
     name: string;
@@ -73,10 +107,8 @@ export interface UpdateSportRequest {
     max_capacity?: number;
     additional_price?: number;
     requires_medical_certificate?: boolean;
-    // ===========================================
-    // Discipline
-    // ==========================================
 }
+
 // ==========================================
 // Payment
 // ==========================================

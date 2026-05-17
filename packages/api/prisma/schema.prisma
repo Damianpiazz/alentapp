@@ -46,6 +46,33 @@ model Member {
     @@map("members") // Para que en la DB la tabla se llame 'members' en minúscula
 }
 
+enum LockerLocation {
+  VESTUARIO_MASCULINO
+  VESTUARIO_FEMENINO
+  NINOS
+}
+
+enum LockerStatus {
+  DISPONIBLE
+  OCUPADO
+  MANTENIMIENTO
+}
+
+model Locker {
+  id                    String         @id @default(uuid())
+
+  number                String         @unique
+
+  location              LockerLocation
+
+  status                LockerStatus   @default(DISPONIBLE)
+
+  member_id             String?
+
+  contract_finish_date  DateTime?
+
+  contract_start_date   DateTime?       @default(now())
+}
 model EquipmentLoan {
     id        String                @id @default(uuid())
     item_name String
