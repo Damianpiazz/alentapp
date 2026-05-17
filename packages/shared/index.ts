@@ -56,7 +56,7 @@ export interface LockerDTO {
 
     contract_finish_date?: string | null;
 
-    contract_start_date: string;
+    contract_start_date: string | null;
 }
 
 export interface CreateLockerRequest {
