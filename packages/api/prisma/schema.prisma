@@ -39,6 +39,7 @@ model Member {
     category   MemberCategory
     status     MemberStatus   @default(Activo)
     created_at DateTime       @default(now())
+    lockers Locker[]
     loans      EquipmentLoan[]
     disciplines Discipline[]
     payments Payment[]
@@ -68,10 +69,13 @@ model Locker {
   status                LockerStatus   @default(DISPONIBLE)
 
   member_id             String?
+  
+  member Member? @relation(fields: [member_id], references: [id])
 
   contract_finish_date  DateTime?
 
   contract_start_date   DateTime?       @default(now())
+}
 }
 model EquipmentLoan {
     id        String                @id @default(uuid())
