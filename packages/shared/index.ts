@@ -54,6 +54,8 @@ export interface LockerDTO {
 
     member_id?: string | null;
 
+    member_dni?: string | null;
+
     contract_finish_date?: string | null;
 
     contract_start_date: string | null;
