@@ -68,8 +68,8 @@ export class PostgresLockerRepository implements LockerRepository {
 
     async findAll(): Promise<LockerDTO[]> {
         const lockers = await prisma.locker.findMany({
-            orderBy: {
-                contract_start_date: 'desc',
+            include: {
+                member: true,
             },
         });
 
