@@ -572,8 +572,23 @@ export function LoansView() {
                                         {selectedLoan?.item_name}
                                     </Text>
                                     <Text fontSize="sm">
-                                        <strong>ID Socio:</strong>{' '}
-                                        {selectedLoan?.member_id}
+                                        <strong>Socio:</strong>{' '}
+                                        {
+                                            members.find(
+                                                (m) =>
+                                                    m.id ===
+                                                    selectedLoan?.member_id,
+                                            )?.name
+                                        }{' '}
+                                        (DNI:{' '}
+                                        {
+                                            members.find(
+                                                (m) =>
+                                                    m.id ===
+                                                    selectedLoan?.member_id,
+                                            )?.dni
+                                        }
+                                        )
                                     </Text>
                                 </Box>
 
