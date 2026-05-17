@@ -149,7 +149,7 @@ export function LockersView() {
             number: locker.number,
             location: locker.location,
             status: locker.status,
-            member_id: locker.member_id,
+            member_id: locker.member_dni || '',
             contract_start_date: locker.contract_start_date,
             contract_finish_date: locker.contract_finish_date
                 ? locker.contract_finish_date
@@ -507,9 +507,11 @@ export function LockersView() {
 
                                         <Table.Cell>
                                             {locker.contract_finish_date
-                                                ? new Date(
-                                                      locker.contract_finish_date,
-                                                  ).toLocaleDateString('es-AR')
+                                                ? locker.contract_finish_date
+                                                      .split('T')[0]
+                                                      .split('-')
+                                                      .reverse()
+                                                      .join('/')
                                                 : '-'}
                                         </Table.Cell>
 
