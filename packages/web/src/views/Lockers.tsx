@@ -584,6 +584,7 @@ export function LockersView() {
                                                     ml="2"
                                                     variant="outline"
                                                     colorPalette="blue"
+                                                    variant="outline"
                                                     onClick={() =>
                                                         openEditModal(locker)
                                                     }
