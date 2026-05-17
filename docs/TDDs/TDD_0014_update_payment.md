@@ -12,19 +12,19 @@ titulo: Actualización de Pagos Existentes
 
 ### Objetivo
 
-Permitir a los administrativos actualizar la información de una obligación financiera existente en el sistema, específicamente para registrar el cobro de la misma y cambiar su estado para mantener las finanzas del club al día.
+Permitir a los administrativos actualizar la información de una obligación financiera existente en el sistema, específicamente para registrar el cobro o la cancelación de la misma y cambiar su estado para mantener las finanzas del club al día.
 
 ### User Persona
 
 - Nombre: Alberto (Administrativo / Tesorero).
-- Necesidad: Modificar el estado de los pagos rápidamente desde la tabla del panel de administración cuando un socio abona su cuota, asegurándose de no procesar el mismo cobro dos veces por error.
+- Necesidad: Modificar el estado de los pagos rápidamente desde la tabla del panel de administración cuando un socio abona su cuota o cuando se da de baja un cobro.
 
 ### Criterios de Aceptación
 
-- El sistema debe permitir actualizar el estado del pago y su fecha de cobro.
+- El sistema debe permitir actualizar el estado del pago a Paid (cobro) o Canceled (anulación).
 - El sistema debe validar que el pago a actualizar se encuentre previamente en estado `Pending` para garantizar la idempotencia.
 - Si el pago ya fue cobrado o anulado, la operación debe ser rechazada.
-- Si la edición es correcta, debe retornar los nuevos datos del pago actualizados, forzando `payment_date` con la fecha y hora del sistema.
+- Si el pago se actualiza a Paid, debe retornar los nuevos datos del pago actualizados, forzando payment_date con la fecha y hora del sistema.
 
 ## Diseño Técnico (RFC)
 
@@ -38,8 +38,7 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 ```ts
 {
   amount?: number;
-  status?: 'Pending' | 'Paid' | 'Overdue' | 'Canceled';
-  payment_date?: string;
+  status?: 'Paid' | 'Canceled';
 }
 ```
 
@@ -53,12 +52,12 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 
 ## Casos de Borde y Errores
 
-| Escenario               | Resultado Esperado                                    | Código HTTP               |
-| ----------------------- | ----------------------------------------------------- | ------------------------- |
-| Pago inexistente        | Mensaje: "El pago no existe"                          | 400 Bad Request           |
-| El pago ya está `Paid`  | Mensaje: "El pago ya se encuentra procesado"          | 409 Conflict              |
-| El pago está `Canceled` | Mensaje: "No se puede cobrar un pago que fue anulado" | 409 Conflict              |
-| Error de conexión a DB  | Mensaje: "Error interno, reintente más tarde"         | 500 Internal Server Error |
+| Escenario               | Resultado Esperado                                      | Código HTTP               |
+| ------------------------| --------------------------------------------------------| --------------------------|
+| Pago inexistente        | Mensaje: "El pago no existe"                            | 400 Bad Request           |
+| El pago ya está `Paid`  | Mensaje: "El pago ya se encuentra procesado"            | 409 Conflict              |
+| El pago está `Canceled` | Mensaje: "No se puede modificar un pago que fue anulado"| 409 Conflict              |
+| Error de conexión a DB  | Mensaje: "Error interno, reintente más tarde"           | 500 Internal Server Error |
 
 ## Plan de Implementación
 
