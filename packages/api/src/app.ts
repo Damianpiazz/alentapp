@@ -14,6 +14,8 @@ import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator
 import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
 import { GetEquipmentLoanUseCase } from './application/GetEquipmentLoanUseCase.js';
 import { EquipmentLoanController } from './delivery/EquipmentLoanController.js';
+import { UpdateEquipmentLoanUseCase } from './application/UpdateEquipmentLoanUseCase.js';
+import { DeleteEquipmentLoanUseCase } from './application/DeleteEquipmentLoanUseCase.js';
 
 import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
 import { SportValidator } from './domain/services/SportValidator.js';
@@ -78,13 +80,6 @@ export function buildApp() {
 
     const memberValidator = new MemberValidator(memberRepo);
 
-    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
-
-    const equipmentLoanValidator = new EquipmentLoanValidator(
-        equipmentLoanRepo,
-        memberRepo,
-    );
-
     const createMemberUseCase = new CreateMemberUseCase(
         memberRepo,
         memberValidator,
@@ -99,6 +94,17 @@ export function buildApp() {
 
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
 
+    // ==========================================
+    // Equipment Loans
+    // ==========================================
+
+    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+
+    const equipmentLoanValidator = new EquipmentLoanValidator(
+        equipmentLoanRepo,
+        memberRepo,
+    );
+
     const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
         equipmentLoanRepo,
     );
@@ -106,6 +112,13 @@ export function buildApp() {
     const newEquipmentLoanUseCase = new NewEquipmentLoanUseCase(
         equipmentLoanRepo,
         equipmentLoanValidator,
+    );
+    const updateEquipmentLoanUseCase = new UpdateEquipmentLoanUseCase(
+        equipmentLoanRepo,
+        equipmentLoanValidator,
+    );
+    const deleteEquipmentLoanUseCase = new DeleteEquipmentLoanUseCase(
+        equipmentLoanRepo,
     );
 
     const memberController = new MemberController(
@@ -142,10 +155,12 @@ export function buildApp() {
     // ==========================================
     // Member Routes
     // ==========================================
-    );
+
     const equipmentLoanController = new EquipmentLoanController(
         newEquipmentLoanUseCase,
         getEquipmentLoanUseCase,
+        updateEquipmentLoanUseCase,
+        deleteEquipmentLoanUseCase,
     );
 
     server.get(
@@ -172,32 +187,17 @@ export function buildApp() {
         '/api/v1/prestamos',
         equipmentLoanController.create.bind(equipmentLoanController),
     );
-
     server.get(
         '/api/v1/prestamos',
         equipmentLoanController.getAll.bind(equipmentLoanController),
     );
-
-    server.get('/', async (req, rep) => {
-
-    server.get(
-        '/api/v1/socios',
-        memberController.getAll.bind(memberController),
-    );
-
-    server.post(
-        '/api/v1/socios',
-        memberController.create.bind(memberController),
-    );
-
     server.put(
-        '/api/v1/socios/:id',
-        memberController.update.bind(memberController),
+        '/api/v1/prestamos/:id',
+        equipmentLoanController.update.bind(equipmentLoanController),
     );
-
     server.delete(
-        '/api/v1/socios/:id',
-        memberController.delete.bind(memberController),
+        '/api/v1/prestamos/:id',
+        equipmentLoanController.delete.bind(equipmentLoanController),
     );
 
     // rutas del locker
@@ -225,12 +225,6 @@ export function buildApp() {
     });
 
     console.log('LOCKER ROUTES REGISTERED');
-
-    server.get('/', async (req, rep) => {
-        rep.status(200).send({
-            msg: 'asd',
-        });
-    });
     console.log(server.printRoutes());
     // =========================
     // SPORTS
@@ -382,7 +376,7 @@ export function buildApp() {
     // =========================
 
     server.get('/', async (_req, rep) => {
-        rep.status(200).send({ msg: 'asd' });
+        rep.status(200).send({ msg: 'ok' });
     });
 
     return server;

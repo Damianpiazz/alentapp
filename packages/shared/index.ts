@@ -100,6 +100,10 @@ export interface CreateEquipmentLoanRequest {
     member_id: string; // UUID
 }
 
+export interface UpdateEquipmentLoanRequest {
+    status: EquipmentLoanStatus;
+}
+
 export interface SportDTO {
     id: string;
     name: string;
