@@ -212,12 +212,6 @@ export function buildApp() {
     });
 
     console.log('LOCKER ROUTES REGISTERED');
-
-    server.get('/', async (req, rep) => {
-        rep.status(200).send({
-            msg: 'asd',
-        });
-    });
     console.log(server.printRoutes());
     // =========================
     // SPORTS
