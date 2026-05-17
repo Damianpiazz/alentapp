@@ -21,12 +21,13 @@ Permitir a los administrativos finalizar el alquiler de un locker, liberándolo 
 
 ### Criterios de Aceptación
 
-- El sistema debe pedir una confirmación explícita antes de liberar el locker.
-- El sistema debe validar que el locker exista antes de procesar la baja.
-- La baja no debe eliminar físicamente el locker de la base de datos.
-- El sistema debe cambiar el estado del locker a `Disponible`.
-- El sistema debe desvincular el socio asociado al locker.
-- Si la operación es exitosa, la tabla debe actualizarse automáticamente.
+* El sistema debe pedir una confirmación explícita antes de liberar el locker.
+* El sistema debe validar que el locker exista antes de procesar la baja.
+* La baja no debe eliminar físicamente el locker de la base de datos.
+* El sistema debe cambiar el estado del locker a "Disponible".
+* El sistema debe desvincular el socio asociado al locker.
+* Si la operación es exitosa, la tabla debe actualizarse automáticamente.
+* La liberación representa la única forma válida de pasar un locker de "Ocupado" a "Disponible".
 
 ## Diseño Técnico (RFC)
 

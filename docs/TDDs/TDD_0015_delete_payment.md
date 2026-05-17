@@ -43,16 +43,15 @@ A fines prácticos y respetando las convenciones REST para borrados lógicos, la
 
 ## Casos de Borde y Errores
 
-| Escenario                        | Resultado Esperado                                              | Código HTTP            |
-| -------------------------------- | --------------------------------------------------------------- | ---------------------- |
-| El pago con el `id` no existe    | Mensaje: "El pago no existe"                                    | 404 Not Found          |
-| El pago ya está `Paid`           | Mensaje: "No se puede anular un pago ya procesado"              | 409 Conflict           |
-| Petición usando método `DELETE`  | Mensaje: "Operación no permitida. Use el endpoint de anulación" | 405 Method Not Allowed |
+| Escenario                     | Resultado Esperado                                 | Código HTTP   |
+| ----------------------------- | -------------------------------------------------- | ------------- |
+| El pago con el `id` no existe | Mensaje: "El pago no existe"                       | 404 Not Found |
+| El pago ya está `Paid`        | Mensaje: "No se puede anular un pago ya procesado" | 409 Conflict  |
 
 ## Plan de Implementación
 
 1. Actualizar las interfaces en el paquete `@alentapp/shared` si fuera necesario.
 2. Ampliar el `PaymentRepository` con el método semántico `delete`.
 3. Implementar la lógica en `DeletePaymentUseCase` utilizando el `PaymentValidator` centralizado.
-4. Crear la ruta `PATCH /api/v1/payments/:id/cancel` en `PaymentController`.
+4. Crear la ruta `DELETE /api/v1/payments/:id/cancel` en `PaymentController`.
 5. Consumir el endpoint desde el frontend y agregar un botón de anulación en la tabla de pagos.

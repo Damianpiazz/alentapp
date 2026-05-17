@@ -9,8 +9,9 @@ import {
     Spinner,
     Center,
     Input,
+    IconButton,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useMemo, useState } from 'react';
 import { equipmentLoanService } from '../services/equipmentLoan';
 import { membersService } from '../services/members';
@@ -46,15 +47,21 @@ export function LoansView() {
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-
+    // estados para crear
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
     const [formData, setFormData] = useState({
         item_name: '',
         due_date: '',
         member_id: '',
     });
+    // estados para actualizar/devolver
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+    const [selectedLoan, setSelectedLoan] = useState<EquipmentLoanDTO | null>(
+        null,
+    );
+    const [editStatus, setEditStatus] = useState<string>('');
 
     const membersCollection = useMemo(
         () =>
@@ -65,6 +72,17 @@ export function LoansView() {
                 })),
             }),
         [members],
+    );
+    const statusCollection = useMemo(
+        () =>
+            createListCollection({
+                items: [
+                    // { label: 'Prestado (Loaned)', value: 'Loaned' },
+                    { label: 'Devuelto (Returned)', value: 'Returned' },
+                    { label: 'Dañado (Damaged)', value: 'Demaged' },
+                ],
+            }),
+        [],
     );
 
     const fetchLoans = async () => {
@@ -112,7 +130,7 @@ export function LoansView() {
         };
         loadLoans();
     }, []);
-
+    // logica de creacion
     const openCreateModal = async () => {
         setError(null);
         setSuccess(null);
@@ -155,36 +173,87 @@ export function LoansView() {
             await equipmentLoanService.create(payload);
             setSuccess('Préstamo creado correctamente');
             setIsDialogOpen(false);
+            await fetchLoans();
         } catch (err: unknown) {
             setError((err as Error).message || 'Error al crear el préstamo');
         } finally {
             setIsSubmitting(false);
         }
     };
+    // logica de actualizacion/devolucion
+    const openEditModal = (loan: EquipmentLoanDTO) => {
+        setError(null);
+        setSuccess(null);
+        setSelectedLoan(loan);
+        setEditStatus(loan.status);
+        setIsEditDialogOpen(true);
+    };
+
+    const handleEditSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!selectedLoan) return;
+
+        setError(null);
+        setSuccess(null);
+        setIsEditSubmitting(true);
+
+        try {
+            await equipmentLoanService.update(selectedLoan.id, editStatus);
+            setSuccess('Estado del préstamo actualizado correctamente');
+            setIsEditDialogOpen(false);
+            await fetchLoans();
+        } catch (err: unknown) {
+            setError(
+                (err as Error).message || 'Error al actualizar el préstamo',
+            );
+        } finally {
+            setIsEditSubmitting(false);
+        }
+    };
+    // logica de eliminacion
+    const handleDeleteLoan = async (id: string, itemName: string) => {
+        if (
+            window.confirm(
+                `¿Estás seguro de que deseas eliminar el préstamo de "${itemName}"?`,
+            )
+        ) {
+            setError(null);
+            setSuccess(null);
+            try {
+                await equipmentLoanService.delete(id);
+                setSuccess('Préstamo eliminado correctamente');
+                await fetchLoans();
+            } catch (err: unknown) {
+                setError(
+                    (err as Error).message || 'Error al eliminar el préstamo',
+                );
+            }
+        }
+    };
 
     return (
-        <DialogRoot
-            open={isDialogOpen}
-            onOpenChange={(open) => setIsDialogOpen(open.open)}
-        >
+        <Box>
             <Stack gap="8">
                 <Flex justify="space-between" align="center">
                     <Stack gap="1">
                         <Heading size="2xl" fontWeight="bold">
-                            Alta de Préstamos
+                            Préstamos de Equipamiento
                         </Heading>
                         <Text color="fg.muted" fontSize="md">
-                            Crea un nuevo préstamo de equipamiento para socios
-                            activos y no cadetes.
+                            Gestiona los préstamos de equipamiento para los
+                            socios.
                         </Text>
                     </Stack>
                     <HStack gap="3">
                         <Button
                             variant="outline"
-                            onClick={fetchMembers}
+                            onClick={() => {
+                                fetchMembers();
+                                fetchLoans();
+                            }}
                             disabled={isLoadingMembers}
                         >
-                            <LuRefreshCw /> Recargar Socios
+                            <LuRefreshCw /> Recargar
                         </Button>
                         <Button
                             colorPalette="blue"
@@ -224,6 +293,164 @@ export function LoansView() {
                     </Box>
                 )}
 
+                <Box
+                    bg="bg.panel"
+                    borderRadius="xl"
+                    boxShadow="sm"
+                    borderWidth="1px"
+                    overflow="hidden"
+                    minH="220px"
+                    position="relative"
+                >
+                    {isLoadingMembers ? (
+                        <Center h="220px">
+                            <Stack align="center" gap="4">
+                                <Spinner size="xl" color="blue.500" />
+                                <Text color="fg.muted">Cargando datos...</Text>
+                            </Stack>
+                        </Center>
+                    ) : (
+                        <Box p="6">
+                            {loans.length === 0 ? (
+                                <Text color="fg.muted" textAlign="center">
+                                    No hay préstamos registrados.
+                                </Text>
+                            ) : (
+                                <Stack gap="4">
+                                    {loans.map((loan) => {
+                                        const member = members.find(
+                                            (m) => m.id === loan.member_id,
+                                        );
+
+                                        return (
+                                            <Box
+                                                key={loan.id}
+                                                p="4"
+                                                borderWidth="1px"
+                                                borderRadius="lg"
+                                                bg="bg.surface"
+                                                _hover={{ shadow: 'md' }}
+                                            >
+                                                <Flex
+                                                    justify="space-between"
+                                                    align="center"
+                                                >
+                                                    <Stack gap="1">
+                                                        <Text
+                                                            fontWeight="bold"
+                                                            fontSize="lg"
+                                                        >
+                                                            {loan.item_name}
+                                                        </Text>
+                                                        <Text
+                                                            fontSize="sm"
+                                                            color="fg.muted"
+                                                        >
+                                                            Socio:{' '}
+                                                            {member
+                                                                ? `${member.name} (DNI: ${member.dni})`
+                                                                : `ID: ${loan.member_id}`}
+                                                        </Text>
+                                                    </Stack>
+                                                    <HStack gap="6">
+                                                        <Stack
+                                                            align="flex-end"
+                                                            gap="1"
+                                                        >
+                                                            <Text
+                                                                fontSize="xs"
+                                                                fontWeight="medium"
+                                                            >
+                                                                Pedido:{' '}
+                                                                {new Date(
+                                                                    loan.loan_date,
+                                                                ).toLocaleDateString()}
+                                                            </Text>
+                                                            <Text
+                                                                fontSize="xs"
+                                                                color="red.600"
+                                                                fontWeight="bold"
+                                                            >
+                                                                Devolución:{' '}
+                                                                {new Date(
+                                                                    loan.due_date,
+                                                                ).toLocaleDateString()}
+                                                            </Text>
+                                                            <Box
+                                                                px="2"
+                                                                py="0.5"
+                                                                bg={
+                                                                    loan.status ===
+                                                                    'Loaned'
+                                                                        ? 'blue.100'
+                                                                        : loan.status ===
+                                                                            'Returned'
+                                                                          ? 'green.100'
+                                                                          : 'orange.100'
+                                                                }
+                                                                color={
+                                                                    loan.status ===
+                                                                    'Loaned'
+                                                                        ? 'blue.800'
+                                                                        : loan.status ===
+                                                                            'Returned'
+                                                                          ? 'green.800'
+                                                                          : 'orange.800'
+                                                                }
+                                                                borderRadius="full"
+                                                                fontSize="xs"
+                                                                fontWeight="bold"
+                                                            >
+                                                                {loan.status}
+                                                            </Box>
+                                                        </Stack>
+
+                                                        {/* --- BOTONES DE ACCIÓN --- */}
+                                                        <HStack gap="2">
+                                                            <IconButton
+                                                                variant="ghost"
+                                                                size="md"
+                                                                aria-label="Editar estado del préstamo"
+                                                                onClick={() =>
+                                                                    openEditModal(
+                                                                        loan,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <LuPencil />
+                                                            </IconButton>
+                                                            <IconButton
+                                                                variant="ghost"
+                                                                size="md"
+                                                                colorPalette="red"
+                                                                aria-label="Eliminar préstamo"
+                                                                onClick={() =>
+                                                                    handleDeleteLoan(
+                                                                        loan.id,
+                                                                        loan.item_name,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <LuTrash2 />
+                                                            </IconButton>
+                                                        </HStack>
+                                                    </HStack>
+                                                </Flex>
+                                            </Box>
+                                        );
+                                    })}
+                                </Stack>
+                            )}
+                        </Box>
+                    )}
+                </Box>
+            </Stack>
+
+            {/* --- MODAL PARA CREAR PRÉSTAMO (El original) --- */}
+            <DialogRoot
+                open={isDialogOpen}
+                onOpenChange={(open) => setIsDialogOpen(open.open)}
+            >
                 <DialogContent>
                     <form onSubmit={handleSubmit}>
                         <DialogHeader>
@@ -291,12 +518,19 @@ export function LoansView() {
                                         required
                                     />
                                 </Field>
-
-                                <Text color="fg.muted" fontSize="sm">
-                                    Selecciona un socio y completa los datos
-                                    para crear un préstamo.
-                                </Text>
                             </Stack>
+
+                            {error && (
+                                <Box
+                                    mt="4"
+                                    p="3"
+                                    bg="red.50"
+                                    color="red.700"
+                                    borderRadius="md"
+                                >
+                                    <Text fontSize="sm">{error}</Text>
+                                </Box>
+                            )}
                         </DialogBody>
                         <DialogFooter>
                             <DialogActionTrigger asChild>
@@ -313,155 +547,106 @@ export function LoansView() {
                         <DialogCloseTrigger />
                     </form>
                 </DialogContent>
+            </DialogRoot>
 
-                {error && (
-                    <Box
-                        p="4"
-                        bg="red.50"
-                        color="red.700"
-                        borderRadius="md"
-                        border="1px solid"
-                        borderColor="red.200"
-                    >
-                        <Text fontWeight="bold">Error:</Text>
-                        <Text>{error}</Text>
-                    </Box>
-                )}
+            {/* --- NUEVO MODAL PARA EDITAR ESTADO --- */}
+            <DialogRoot
+                open={isEditDialogOpen}
+                onOpenChange={(open) => setIsEditDialogOpen(open.open)}
+            >
+                <DialogContent>
+                    <form onSubmit={handleEditSubmit}>
+                        <DialogHeader>
+                            <DialogTitle>Actualizar Estado</DialogTitle>
+                        </DialogHeader>
+                        <DialogBody>
+                            <Stack gap="4">
+                                <Box
+                                    p="3"
+                                    borderWidth="1px"
+                                    borderRadius="md"
+                                    bg="gray.50"
+                                >
+                                    <Text fontSize="sm">
+                                        <strong>Ítem:</strong>{' '}
+                                        {selectedLoan?.item_name}
+                                    </Text>
+                                    <Text fontSize="sm">
+                                        <strong>Socio:</strong>{' '}
+                                        {
+                                            members.find(
+                                                (m) =>
+                                                    m.id ===
+                                                    selectedLoan?.member_id,
+                                            )?.name
+                                        }{' '}
+                                        (DNI:{' '}
+                                        {
+                                            members.find(
+                                                (m) =>
+                                                    m.id ===
+                                                    selectedLoan?.member_id,
+                                            )?.dni
+                                        }
+                                        )
+                                    </Text>
+                                </Box>
 
-                <Box
-                    bg="bg.panel"
-                    borderRadius="xl"
-                    boxShadow="sm"
-                    borderWidth="1px"
-                    overflow="hidden"
-                    minH="220px"
-                    position="relative"
-                >
-                    {isLoadingMembers ? (
-                        <Center h="220px">
-                            <Stack align="center" gap="4">
-                                <Spinner size="xl" color="blue.500" />
-                                <Text color="fg.muted">Cargando socios...</Text>
-                            </Stack>
-                        </Center>
-                    ) : (
-                        <Box p="6">
-                            {loans.length === 0 ? (
-                                <Text color="fg.muted" textAlign="center">
-                                    No hay préstamos registrados.
-                                </Text>
-                            ) : (
-                                <Box p="6">
-                                    {loans.length === 0 ? (
-                                        <Text
-                                            color="fg.muted"
-                                            textAlign="center"
-                                        >
-                                            No hay préstamos registrados.
-                                        </Text>
-                                    ) : (
-                                        <Stack gap="4">
-                                            {loans.map((loan) => {
-                                                // Buscamos el socio correspondiente a este préstamo
-                                                const member = members.find(
-                                                    (m) =>
-                                                        m.id === loan.member_id,
-                                                );
-
-                                                return (
-                                                    <Box
-                                                        key={loan.id}
-                                                        p="4"
-                                                        borderWidth="1px"
-                                                        borderRadius="lg"
-                                                        bg="bg.surface"
-                                                        _hover={{
-                                                            shadow: 'md',
-                                                        }}
+                                <Field label="Nuevo Estado" required>
+                                    <SelectRoot
+                                        collection={statusCollection}
+                                        value={editStatus ? [editStatus] : []}
+                                        onValueChange={(e) =>
+                                            setEditStatus(e.value[0] ?? '')
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValueText placeholder="Selecciona el estado" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {statusCollection.items.map(
+                                                (status) => (
+                                                    <SelectItem
+                                                        item={status}
+                                                        key={status.value}
                                                     >
-                                                        <Flex
-                                                            justify="space-between"
-                                                            align="center"
-                                                        >
-                                                            <Stack gap="1">
-                                                                <Text
-                                                                    fontWeight="bold"
-                                                                    fontSize="lg"
-                                                                >
-                                                                    {
-                                                                        loan.item_name
-                                                                    }
-                                                                </Text>
-                                                                <Text
-                                                                    fontSize="sm"
-                                                                    color="fg.muted"
-                                                                >
-                                                                    {/* Si encontramos al socio, mostramos su nombre y DNI. Si no, mostramos el ID por defecto */}
-                                                                    Socio:{' '}
-                                                                    {member
-                                                                        ? `${member.name} (DNI: ${member.dni})`
-                                                                        : `ID: ${loan.member_id}`}
-                                                                </Text>
-                                                            </Stack>
-                                                            <Stack
-                                                                align="flex-end"
-                                                                gap="1"
-                                                            >
-                                                                <Text
-                                                                    fontSize="xs"
-                                                                    fontWeight="medium"
-                                                                >
-                                                                    Pedido:{' '}
-                                                                    {new Date(
-                                                                        loan.loan_date,
-                                                                    ).toLocaleDateString()}
-                                                                </Text>
-                                                                <Text
-                                                                    fontSize="xs"
-                                                                    color="red.600"
-                                                                    fontWeight="bold"
-                                                                >
-                                                                    Devolución:{' '}
-                                                                    {new Date(
-                                                                        loan.due_date,
-                                                                    ).toLocaleDateString()}
-                                                                </Text>
-                                                                <Box
-                                                                    px="2"
-                                                                    py="0.5"
-                                                                    bg={
-                                                                        loan.status ===
-                                                                        'Loaned'
-                                                                            ? 'green.100'
-                                                                            : 'blue.100'
-                                                                    }
-                                                                    color={
-                                                                        loan.status ===
-                                                                        'Loaned'
-                                                                            ? 'green.800'
-                                                                            : 'blue.800'
-                                                                    }
-                                                                    borderRadius="full"
-                                                                    fontSize="xs"
-                                                                    fontWeight="bold"
-                                                                >
-                                                                    {
-                                                                        loan.status
-                                                                    }
-                                                                </Box>
-                                                            </Stack>
-                                                        </Flex>
-                                                    </Box>
-                                                );
-                                            })}
-                                        </Stack>
-                                    )}
+                                                        {status.label}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </SelectRoot>
+                                </Field>
+                            </Stack>
+
+                            {error && (
+                                <Box
+                                    mt="4"
+                                    p="3"
+                                    bg="red.50"
+                                    color="red.700"
+                                    borderRadius="md"
+                                >
+                                    <Text fontSize="sm">{error}</Text>
                                 </Box>
                             )}
-                        </Box>
-                    )}
-                </Box>
-            </Stack>
-        </DialogRoot>
+                        </DialogBody>
+                        <DialogFooter>
+                            <DialogActionTrigger asChild>
+                                <Button variant="outline">Cancelar</Button>
+                            </DialogActionTrigger>
+                            <Button
+                                type="submit"
+                                colorPalette="blue"
+                                loading={isEditSubmitting}
+                            >
+                                Guardar Cambios
+                            </Button>
+                        </DialogFooter>
+                        <DialogCloseTrigger />
+                    </form>
+                </DialogContent>
+            </DialogRoot>
+        </Box>
     );
 }
