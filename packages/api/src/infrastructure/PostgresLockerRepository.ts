@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 
 import {
+    Prisma,
     PrismaClient,
     LockerLocation,
     LockerStatus,
@@ -67,9 +68,13 @@ export class PostgresLockerRepository implements LockerRepository {
             include: {
                 member: true,
             },
+
+            orderBy: {
+                contract_start_date: 'desc',
+            },
         });
 
-        return lockers.map((locker: Locker) => this.mapToDTO(locker));
+        return lockers.map((locker) => this.mapToDTO(locker));
     }
 
     async update(id: string, data: UpdateLockerRequest): Promise<LockerDTO> {
@@ -112,7 +117,13 @@ export class PostgresLockerRepository implements LockerRepository {
         return this.mapToDTO(updated);
     }
 
-    private mapToDTO(locker: Locker): LockerDTO {
+    private mapToDTO(
+        locker: Locker & {
+            member?: {
+                dni: string;
+            } | null;
+        },
+    ): LockerDTO {
         return {
             id: locker.id,
 
@@ -123,6 +134,8 @@ export class PostgresLockerRepository implements LockerRepository {
             status: this.unmapStatus(locker.status),
 
             member_id: locker.member_id,
+
+            member_dni: locker.member?.dni || null,
 
             contract_finish_date:
                 locker.contract_finish_date?.toISOString() ?? null,
