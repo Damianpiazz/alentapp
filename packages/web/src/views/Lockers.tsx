@@ -299,6 +299,9 @@ export function LockersView() {
 
                                 <Field label="Estado">
                                     <SelectRoot
+                                        disabled={
+                                            editingLocker?.status === 'Ocupado'
+                                        }
                                         collection={statuses}
                                         value={[
                                             formData.status || 'Disponible',
@@ -355,7 +358,9 @@ export function LockersView() {
                                                     ) {
                                                         return (
                                                             status.value !==
-                                                            'Mantenimiento'
+                                                                'Mantenimiento' &&
+                                                            status.value !==
+                                                                'Disponible'
                                                         );
                                                     }
 
