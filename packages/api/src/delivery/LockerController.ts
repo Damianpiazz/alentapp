@@ -81,61 +81,71 @@ export class LockerController {
             return rep.send({
                 data: locker,
             });
-        } catch (error: any) {
-            if (error.message === 'El locker no existe') {
+        } catch (error) {
+            const err = error as Error;
+
+            console.log('ERROR UPDATE LOCKER:', err);
+
+            if (err.message === 'El locker no existe') {
                 return rep.status(404).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
-            if (error.message === 'El socio no existe') {
+            if (err.message === 'El socio no existe') {
                 return rep.status(404).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
-            if (error.message === 'Ya existe un locker con ese número') {
+            if (err.message === 'Ya existe un locker con ese número') {
                 return rep.status(409).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
-            if (error.message === 'El locker no se encuentra disponible') {
+            if (err.message === 'El locker no se encuentra disponible') {
                 return rep.status(409).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
             if (
-                error.message ===
+                err.message ===
                 'La fecha debe ser igual o posterior a la fecha actual'
             ) {
                 return rep.status(400).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
-            if (error.message === 'Debe ingresar una fecha de vencimiento') {
+            if (err.message === 'Debe ingresar una fecha de vencimiento') {
                 return rep.status(400).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
-            if (error.message === 'No se puede asignar fecha sin socio') {
+            if (err.message === 'No se puede asignar fecha sin socio') {
                 return rep.status(400).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
-            if (error.message === 'El DNI debe tener 8 dígitos') {
+            if (err.message === 'El DNI debe tener 8 dígitos') {
                 return rep.status(400).send({
-                    error: error.message,
+                    error: err.message,
                 });
             }
 
-            if (error.message === 'Debe asignar un socio al locker') {
+            if (err.message === 'Debe asignar un socio al locker') {
                 return rep.status(400).send({
-                    error: error.message,
+                    error: err.message,
+                });
+            }
+
+            if (err.message === 'Ingrese un DNI correcto') {
+                return rep.status(400).send({
+                    error: err.message,
                 });
             }
 
