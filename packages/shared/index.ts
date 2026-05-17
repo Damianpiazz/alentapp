@@ -32,6 +32,26 @@ export interface UpdateMemberRequest {
     status?: MemberStatus;
 }
 
+// ==========================================
+// EquipmentLoan
+// ==========================================
+
+export type EquipmentLoanStatus = 'Loaned' | 'Returned' | 'Demaged';
+
+export interface EquipmentLoanDTO {
+    id: string; // UUID
+    item_name: string;
+    status: EquipmentLoanStatus;
+    loan_date: Date;
+    due_date: Date;
+    member_id: string; // UUID
+}
+
+export interface CreateEquipmentLoanRequest {
+    item_name: string;
+    due_date: Date;
+    member_id: string; // UUID
+}
 export interface SportDTO {
     id: string;
     name: string;
@@ -54,9 +74,6 @@ export interface UpdateSportRequest {
     max_capacity?: number;
     additional_price?: number;
     requires_medical_certificate?: boolean;
-    // ===========================================
-    // Discipline
-    // ==========================================
 }
 // ==========================================
 // Payment
@@ -81,6 +98,14 @@ export interface CreatePaymentRequest {
     year: number;
     due_date: string; // ISO Date String (YYYY-MM-DD)
     member_id: string;
+}
+
+export interface UpdatePaymentRequest {
+    amount?: number;
+    status?: PaymentStatus;
+    payment_date?: string | null; // ISO Date String (YYYY-MM-DD)
+}
+
 // ===========================================
 // Discipline
 // ==========================================

@@ -1,4 +1,4 @@
-import { PaymentDTO } from '@alentapp/shared';
+import { PaymentDTO, UpdatePaymentRequest } from '@alentapp/shared';
 
 // Esta interfaz es el "Puerto de Salida". El dominio dice:
 // "No me importa si usás Postgres o Mongo, dame un objeto que cumpla esto".
@@ -8,4 +8,5 @@ export interface PaymentRepository {
     findAll(): Promise<PaymentDTO[]>;
     findById(id: string): Promise<PaymentDTO | null>;
     delete(id: string): Promise<void>;
+    update(id: string, data: UpdatePaymentRequest): Promise<PaymentDTO>;
 }

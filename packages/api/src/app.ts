@@ -8,6 +8,11 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+import { PostgresEquipmentLoanRepository } from './infrastructure/PostgresEquipmentLoanRepository.js';
+import { EquipmentLoanValidator } from './domain/services/EquipmentLoanValidator.js';
+import { NewEquipmentLoanUseCase } from './application/NewEquipmentLoanUseCase.js';
+import { GetEquipmentLoanUseCase } from './application/GetEquipmentLoanUseCase.js';
+import { EquipmentLoanController } from './delivery/EquipmentLoanController.js';
 
 import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
 import { SportValidator } from './domain/services/SportValidator.js';
@@ -30,6 +35,7 @@ import { PaymentValidator } from './domain/services/PaymentValidator.js';
 import { CreatePaymentUseCase } from './application/CreatePaymentUseCase.js';
 import { GetPaymentsUseCase } from './application/GetPaymentsUseCase.js';
 import { GetPaymentByIdUseCase } from './application/GetPaymentByIdUseCase.js';
+import { UpdatePaymentUseCase } from './application/UpdatePaymentUseCase.js';
 import { DeletePaymentUseCase } from './application/DeletePaymentUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
 
@@ -55,20 +61,22 @@ export function buildApp() {
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
-    });
-
-    // ==========================================
-    // MEMBER
+    }); // MEMBER
     // ==========================================
 
+    // ==========================================
     const memberRepo = new PostgresMemberRepository();
     const memberValidator = new MemberValidator(memberRepo);
+    const equipmentLoanRepo = new PostgresEquipmentLoanRepository();
+    const equipmentLoanValidator = new EquipmentLoanValidator(
+        equipmentLoanRepo,
+        memberRepo,
+    );
 
     const createMemberUseCase = new CreateMemberUseCase(
         memberRepo,
         memberValidator,
     );
-
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
 
     const updateMemberUseCase = new UpdateMemberUseCase(
@@ -77,6 +85,13 @@ export function buildApp() {
     );
 
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+    const getEquipmentLoanUseCase = new GetEquipmentLoanUseCase(
+        equipmentLoanRepo,
+    );
+    const newEquipmentLoanUseCase = new NewEquipmentLoanUseCase(
+        equipmentLoanRepo,
+        equipmentLoanValidator,
+    );
 
     const memberController = new MemberController(
         createMemberUseCase,
@@ -84,28 +99,36 @@ export function buildApp() {
         updateMemberUseCase,
         deleteMemberUseCase,
     );
+    const equipmentLoanController = new EquipmentLoanController(
+        newEquipmentLoanUseCase,
+        getEquipmentLoanUseCase,
+    );
 
     server.get(
         '/api/v1/socios',
         memberController.getAll.bind(memberController),
     );
-
     server.post(
         '/api/v1/socios',
         memberController.create.bind(memberController),
     );
-
     server.put(
         '/api/v1/socios/:id',
         memberController.update.bind(memberController),
     );
-
     server.delete(
         '/api/v1/socios/:id',
         memberController.delete.bind(memberController),
     );
 
-    // =========================
+    server.post(
+        '/api/v1/prestamos',
+        equipmentLoanController.create.bind(equipmentLoanController),
+    );
+    server.get(
+        '/api/v1/prestamos',
+        equipmentLoanController.getAll.bind(equipmentLoanController),
+    ); // =========================
     // SPORTS
     // =========================
 
@@ -224,6 +247,11 @@ export function buildApp() {
         paymentValidator,
     );
 
+    const updatePaymentUseCase = new UpdatePaymentUseCase(
+        paymentRepository,
+        paymentValidator,
+    );
+
     const deletePaymentUseCase = new DeletePaymentUseCase(
         paymentRepository,
         paymentValidator,
@@ -233,6 +261,7 @@ export function buildApp() {
         createPaymentUseCase,
         getPaymentsUseCase,
         getPaymentByIdUseCase,
+        updatePaymentUseCase,
         deletePaymentUseCase,
     );
 
@@ -249,6 +278,11 @@ export function buildApp() {
     server.get(
         '/api/v1/payments/:id',
         paymentController.getById.bind(paymentController),
+    );
+
+    server.put(
+        '/api/v1/payments/:id',
+        paymentController.update.bind(paymentController),
     );
 
     server.delete(
