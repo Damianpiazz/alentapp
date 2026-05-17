@@ -12,7 +12,7 @@ import {
     Center,
     IconButton,
 } from '@chakra-ui/react';
-import { LuPlus, LuRefreshCw, LuPencil } from 'react-icons/lu';
+import { LuPlus, LuRefreshCw, LuPencil, LuTrash2 } from 'react-icons/lu';
 import { useEffect, useState, useMemo } from 'react';
 import { paymentsService } from '../services/payments';
 import { membersService } from '../services/members';
@@ -179,6 +179,23 @@ export function PaymentsView() {
             setError(err.message || 'Error al guardar el pago');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDeletePayment = async (id: string) => {
+        if (window.confirm('¿Estás seguro de que deseas anular este pago?')) {
+            setError(null);
+            setSuccessMsg(null);
+            setIsLoading(true);
+            try {
+                await paymentsService.delete(id);
+                setSuccessMsg('Pago anulado exitosamente');
+                fetchPayments();
+            } catch (error) {
+                const err = error as Error;
+                setError(err.message || 'Error al anular el pago');
+                setIsLoading(false);
+            }
         }
     };
 
@@ -506,6 +523,10 @@ export function PaymentsView() {
                                     else if (payment.status === 'Canceled')
                                         statusColor = 'orange';
 
+                                    const canDelete =
+                                        payment.status === 'Pending' ||
+                                        payment.status === 'Overdue';
+
                                     return (
                                         <Table.Row
                                             key={payment.id}
@@ -574,6 +595,21 @@ export function PaymentsView() {
                                                         }
                                                     >
                                                         <LuPencil />
+                                                    </IconButton>
+
+                                                    <IconButton
+                                                        variant="ghost"
+                                                        colorPalette="red"
+                                                        size="sm"
+                                                        aria-label="Anular pago"
+                                                        onClick={() =>
+                                                            handleDeletePayment(
+                                                                payment.id,
+                                                            )
+                                                        }
+                                                        disabled={!canDelete}
+                                                    >
+                                                        <LuTrash2 />
                                                     </IconButton>
                                                 </HStack>
                                             </Table.Cell>

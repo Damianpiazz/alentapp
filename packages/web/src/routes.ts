@@ -7,7 +7,6 @@ import { LoansView } from './views/EquipmentLoan';
 import { SportsView } from './views/Sports';
 import { PaymentsView } from './views/Payments';
 import { DisciplinesView } from './views/Disciplines';
-import Layout from './Layout';
 
 export const router = createBrowserRouter([
     {
