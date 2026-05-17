@@ -70,7 +70,7 @@ export class PostgresLockerRepository implements LockerRepository {
             },
 
             orderBy: {
-                contract_start_date: 'desc',
+                number: 'asc',
             },
         });
 
