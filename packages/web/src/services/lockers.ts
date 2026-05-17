@@ -5,7 +5,7 @@ import type {
 } from '@alentapp/shared';
 
 const API_URL =
-    (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api/v1';
+    (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api/v1';
 
 export const lockersService = {
     async getAll(): Promise<LockerDTO[]> {

@@ -155,7 +155,7 @@ export function buildApp() {
 if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
     const server = buildApp();
 
-    const port = parseInt(process.env.PORT || '3001', 10);
+    const port = parseInt(process.env.PORT || '3000', 10);
 
     server.listen(
         {
