@@ -95,7 +95,9 @@ export class PaymentController {
                 return reply.status(400).send({ error: err.message });
             }
             if (
-                err.message === 'No se puede modificar un pago que fue anulado'
+                err.message ===
+                    'No se puede modificar un pago que fue anulado' ||
+                err.message === 'El pago ya se encuentra procesado'
             ) {
                 return reply.status(409).send({ error: err.message });
             }
