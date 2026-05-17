@@ -24,7 +24,7 @@ export class PaymentValidator {
             throw new Error('El pago ya se encuentra procesado');
         }
         if (currentStatus === 'Canceled') {
-            throw new Error('No se puede cobrar un pago que fue anulado');
+            throw new Error('No se puede modificar un pago que fue anulado');
         }
     }
 }
