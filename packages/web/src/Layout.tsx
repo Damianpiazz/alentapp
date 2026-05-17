@@ -51,6 +51,21 @@ function Layout() {
                                 Miembros
                             </Text>
                         </RouterLink>
+                        <RouterLink to="/payments">
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
+                                letterSpacing="wider"
+                                color="fg.muted"
+                                _hover={{
+                                    color: 'blue.500',
+                                    textDecoration: 'none',
+                                }}
+                            >
+                                Pagos
+                            </Text>
+                        </RouterLink>
                     </HStack>
                     <HStack gap="10">
                         <RouterLink to="/loans">
