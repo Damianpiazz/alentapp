@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+
 import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
 import { MemberValidator } from './domain/services/MemberValidator.js';
 import { CreateMemberUseCase } from './application/NewMemberUseCase.js';
@@ -7,6 +8,15 @@ import { GetMembersUseCase } from './application/GetMembersUseCase.js';
 import { UpdateMemberUseCase } from './application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { MemberController } from './delivery/MemberController.js';
+
+import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
+import { SportValidator } from './domain/services/SportValidator.js';
+import { GetSportsUseCase } from './application/GetSportsUseCase.js';
+import { CreateSportUseCase } from './application/CreateSportUseCase.js';
+import { UpdateSportUseCase } from './application/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from './application/DeleteSportUseCase.js';
+import { SportController } from './delivery/SportController.js';
+
 import { PostgresDisciplineRepository } from './infrastructure/PostgresDisciplineRepository.js';
 import { CreateDisciplineUseCase } from './application/CreateDisciplineUseCase.js';
 import { GetDisciplinesUseCase } from './application/GetDisciplinesUseCase.js';
@@ -58,11 +68,14 @@ export function buildApp() {
         memberRepo,
         memberValidator,
     );
+
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
+
     const updateMemberUseCase = new UpdateMemberUseCase(
         memberRepo,
         memberValidator,
     );
+
     const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
 
     const memberController = new MemberController(
@@ -76,24 +89,71 @@ export function buildApp() {
         '/api/v1/socios',
         memberController.getAll.bind(memberController),
     );
+
     server.post(
         '/api/v1/socios',
         memberController.create.bind(memberController),
     );
+
     server.put(
         '/api/v1/socios/:id',
         memberController.update.bind(memberController),
     );
+
     server.delete(
         '/api/v1/socios/:id',
         memberController.delete.bind(memberController),
     );
 
-    // ==========================================
-    // Discipline
-    // ==========================================
+    // =========================
+    // SPORTS
+    // =========================
+
+    const sportRepo = new PostgresSportRepository();
+
+    const sportValidator = new SportValidator(sportRepo);
+
+    const getSportsUseCase = new GetSportsUseCase(sportRepo);
+
+    const createSportUseCase = new CreateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
+
+    const updateSportUseCase = new UpdateSportUseCase(
+        sportRepo,
+        sportValidator,
+    );
+
+    const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
+
+    const sportController = new SportController(
+        getSportsUseCase,
+        createSportUseCase,
+        updateSportUseCase,
+        deleteSportUseCase,
+    );
+
+    server.get('/api/v1/sports', sportController.getAll.bind(sportController));
+
+    server.post('/api/v1/sports', sportController.create.bind(sportController));
+
+    server.put(
+        '/api/v1/sports/:id',
+        sportController.update.bind(sportController),
+    );
+
+    server.delete(
+        '/api/v1/sports/:id',
+        sportController.delete.bind(sportController),
+    );
+
+    // =========================
+    // DISCIPLINES
+    // =========================
 
     const disciplineRepo = new PostgresDisciplineRepository();
+
     const disciplineValidator = new DisciplineValidator(disciplineRepo);
 
     const createDisciplineUseCase = new CreateDisciplineUseCase(
@@ -124,20 +184,27 @@ export function buildApp() {
         '/api/v1/disciplines',
         disciplineController.getAll.bind(disciplineController),
     );
+
     server.post(
         '/api/v1/disciplines',
         disciplineController.create.bind(disciplineController),
     );
+
     server.put(
         '/api/v1/disciplines/:id',
         disciplineController.update.bind(disciplineController),
     );
+
     server.delete(
         '/api/v1/disciplines/:id',
         disciplineController.delete.bind(disciplineController),
     );
 
-    server.get('/', async (req, rep) => {
+    // =========================
+    // HEALTHCHECK
+    // =========================
+
+    server.get('/', async (_req, rep) => {
         rep.status(200).send({ msg: 'asd' });
     });
 
@@ -192,13 +259,17 @@ export function buildApp() {
     return server;
 }
 
-// Solo iniciar el servidor si el script se ejecuta directamente (no cuando es importado por vitest)
 if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
     const server = buildApp();
+
     const port = parseInt(process.env.PORT || '3000', 10);
 
-    server.listen({ port, host: '0.0.0.0' }, () =>
-        server.log.info(`API server running on http://localhost:${port}`),
+    server.listen(
+        {
+            port,
+            host: '0.0.0.0',
+        },
+        () => server.log.info(`API server running on http://localhost:${port}`),
     );
 
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
