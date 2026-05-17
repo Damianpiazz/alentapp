@@ -87,6 +87,8 @@ export interface CreateEquipmentLoanRequest {
 
 export interface UpdateEquipmentLoanRequest {
     status: EquipmentLoanStatus;
+}
+
 export interface SportDTO {
     id: string;
     name: string;
