@@ -15,6 +15,7 @@ import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
 import { GetLockersUseCase } from './application/GetLockersUseCase.js';
 import { LockerController } from './delivery/LockerController.js';
 import { UpdateLockerUseCase } from './application/UpdateLockerUseCase.js';
+import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
 
 export function buildApp() {
     const server = Fastify({
@@ -87,10 +88,14 @@ export function buildApp() {
         lockerValidator,
         memberRepo,
     );
+
+    const deleteLockerUseCase = new DeleteLockerUseCase(lockerRepo);
+
     const lockerController = new LockerController(
         createLockerUseCase,
         getLockersUseCase,
         updateLockerUseCase,
+        deleteLockerUseCase,
     );
 
     // ==========================================
@@ -133,6 +138,12 @@ export function buildApp() {
         '/api/v1/lockers/:id',
 
         lockerController.update.bind(lockerController),
+    );
+
+    server.delete(
+        '/api/v1/lockers/:id',
+
+        lockerController.delete.bind(lockerController),
     );
 
     server.get('/test-lockers', async () => {
