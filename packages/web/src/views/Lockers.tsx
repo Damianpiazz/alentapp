@@ -149,7 +149,7 @@ export function LockersView() {
             number: locker.number,
             location: locker.location,
             status: locker.status,
-            member_id: locker.member_dni || '',
+            member_id: formData.member_id?.trim() ? formData.member_id : null,
             contract_start_date: locker.contract_start_date,
             contract_finish_date: locker.contract_finish_date
                 ? locker.contract_finish_date
@@ -584,7 +584,6 @@ export function LockersView() {
                                                     ml="2"
                                                     variant="outline"
                                                     colorPalette="blue"
-                                                    variant="outline"
                                                     onClick={() =>
                                                         openEditModal(locker)
                                                     }
