@@ -78,7 +78,6 @@ export function buildApp() {
     // Members
     // ==========================================
 
-    // ==========================================
     const memberRepo = new PostgresMemberRepository();
 
     const memberValidator = new MemberValidator(memberRepo);
@@ -121,6 +120,8 @@ export function buildApp() {
     const deleteEquipmentLoanUseCase = new DeleteEquipmentLoanUseCase(
         equipmentLoanRepo,
     );
+
+    const getMembersUseCase = new GetMembersUseCase(memberRepo);
 
     const memberController = new MemberController(
         createMemberUseCase,
