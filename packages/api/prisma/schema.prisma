@@ -76,7 +76,7 @@ model Locker {
 
   contract_start_date   DateTime?       @default(now())
 }
-}
+
 model EquipmentLoan {
     id        String                @id @default(uuid())
     item_name String
