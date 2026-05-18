@@ -152,6 +152,10 @@ export function PaymentsView() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!formData.amount || formData.amount <= 0) {
+            setError('El monto debe ser mayor a 0');
+            return;
+        }
         setIsSubmitting(true);
         setError(null);
         try {
@@ -288,6 +292,7 @@ export function PaymentsView() {
                                     <Input
                                         type="number"
                                         step="0.01"
+                                        min="0.01"
                                         placeholder="Ej. 1500.50"
                                         value={formData.amount || ''}
                                         onChange={(e) =>
