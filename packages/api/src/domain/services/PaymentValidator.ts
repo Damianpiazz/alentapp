@@ -1,8 +1,12 @@
-import { PaymentStatus } from '@alentapp/shared';
+import {
+    PaymentStatus,
+    UpdatePaymentRequest,
+    CreatePaymentRequest,
+} from '@alentapp/shared';
 
 export class PaymentValidator {
     // TDD-0013: Validar que no falten datos al crear
-    validateRequiredFields(data: any): void {
+    validateRequiredFields(data: CreatePaymentRequest): void {
         const missingFields = [];
 
         if (!data.amount) missingFields.push('amount');
@@ -22,13 +26,20 @@ export class PaymentValidator {
         }
     }
 
-    // TDD-0014: Validar idempotencia para la actualización/cobro
+    // TDD-0014: Validar idempotencia para la actualización/cobro + validar monto positivo
     validateForUpdate(currentStatus: PaymentStatus): void {
         if (currentStatus === 'Paid') {
             throw new Error('El pago ya se encuentra procesado');
         }
         if (currentStatus === 'Canceled') {
             throw new Error('No se puede modificar un pago que fue anulado');
+        }
+    }
+
+    validateUpdateFields(data: UpdatePaymentRequest): void {
+        // Tipado fuerte aquí
+        if (data.amount !== undefined && data.amount <= 0) {
+            throw new Error('El monto debe ser mayor a cero');
         }
     }
 

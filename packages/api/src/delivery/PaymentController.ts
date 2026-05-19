@@ -101,6 +101,12 @@ export class PaymentController {
             if (err.message === 'El pago no existe') {
                 return reply.status(400).send({ error: err.message });
             }
+
+            // 400: Validación de monto negativo o cero
+            if (err.message === 'El monto debe ser mayor a cero') {
+                return reply.status(400).send({ error: err.message });
+            }
+
             if (
                 err.message ===
                     'No se puede modificar un pago que fue anulado' ||
@@ -108,6 +114,7 @@ export class PaymentController {
             ) {
                 return reply.status(409).send({ error: err.message });
             }
+
             request.log.error(error);
             return reply
                 .status(500)
