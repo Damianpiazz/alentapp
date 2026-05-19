@@ -150,12 +150,27 @@ export function PaymentsView() {
         setIsDialogOpen(true);
     };
 
+    const [wasValidated, setWasValidated] = useState(false);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setWasValidated(true);
+        if (
+            !formData.member_id ||
+            formData.member_id.trim() === '' ||
+            !formData.amount ||
+            formData.amount <= 0
+        ) {
+            return;
+        }
+        /*if (!formData.member_id || formData.member_id.trim() === '') {
+            setError('Debe seleccionar un socio');
+            return;
+        }
         if (!formData.amount || formData.amount <= 0) {
             setError('El monto debe ser mayor a 0');
             return;
-        }
+        }*/
         setIsSubmitting(true);
         setError(null);
         try {
@@ -254,9 +269,19 @@ export function PaymentsView() {
                         </DialogHeader>
                         <DialogBody>
                             <Stack gap="4">
-                                <Field label="Socio" required>
+                                <Field
+                                    label="Socio"
+                                    required
+                                    invalid={
+                                        wasValidated &&
+                                        (!formData.member_id ||
+                                            formData.member_id.trim() === '')
+                                    }
+                                    errorText="Debe seleccionar un socio"
+                                >
                                     <SelectRoot
                                         collection={membersCollection}
+                                        name="member_id"
                                         value={
                                             formData.member_id
                                                 ? [formData.member_id]
@@ -294,15 +319,27 @@ export function PaymentsView() {
                                         step="0.01"
                                         min="0.01"
                                         placeholder="Ej. 1500.50"
+                                        css={{
+                                            '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button':
+                                                {
+                                                    display: 'none',
+                                                    WebkitAppearance: 'none',
+                                                    margin: 0,
+                                                },
+                                            '&[type=number]': {
+                                                MozAppearance: 'textfield',
+                                            },
+                                        }}
                                         value={formData.amount || ''}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                                ? parseFloat(e.target.value)
+                                                : 0;
                                             setFormData({
                                                 ...formData,
-                                                amount: parseFloat(
-                                                    e.target.value,
-                                                ),
-                                            })
-                                        }
+                                                amount: isNaN(val) ? 0 : val,
+                                            });
+                                        }}
                                         required
                                     />
                                 </Field>
