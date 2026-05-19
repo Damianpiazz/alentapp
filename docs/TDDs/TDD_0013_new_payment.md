@@ -24,6 +24,7 @@ Registrar una nueva obligación financiera que un socio tiene con el club para g
 - El sistema debe validar que el socio exista antes de poder asignarle el pago.
 - Al finalizar, el sistema debe mostrar un mensaje de éxito.
 - El pago debe quedar guardado con estado `Pending` por defecto.
+- El sistema debe validar que el monto (amount) sea mayor a cero. No se permiten pagos con montos negativos o en cero.
 
 ## Diseño Técnico (RFC)
 
@@ -50,11 +51,11 @@ Definiremos los tipos en el paquete compartido para asegurar sincronización:
 
 ```ts
 {
-  amount: number;
-  month: number;
-  year: number;
-  due_date: string;
-  member_id: string;
+    amount: number;
+    month: number;
+    year: number;
+    due_date: string;
+    member_id: string;
 }
 ```
 
@@ -67,11 +68,12 @@ Definiremos los tipos en el paquete compartido para asegurar sincronización:
 
 ## Casos de Borde y Errores
 
-| Escenario                      | Resultado Esperado                            | Código HTTP               |
-| ------------------------------ | --------------------------------------------- | ------------------------- |
-| El socio `member_id` no existe | Mensaje: "Socio no encontrado"                | 404 Not Found             |
-| Faltan datos obligatorios      | Mensaje indicando los campos faltantes        | 400 Bad Request           |
-| Error de conexión a DB         | Mensaje: "Error interno, reintente más tarde" | 500 Internal Server Error |
+| Escenario                        | Resultado Esperado                            | Código HTTP               |
+| -------------------------------- | --------------------------------------------- | ------------------------- |
+| El socio `member_id` no existe   | Mensaje: "Socio no encontrado"                | 404 Not Found             |
+| Faltan datos obligatorios        | Mensaje indicando los campos faltantes        | 400 Bad Request           |
+| Error de conexión a DB           | Mensaje: "Error interno, reintente más tarde" | 500 Internal Server Error |
+| El monto es menor o igual a cero | Mensaje: "El monto debe ser mayor a cero"     | 400 Bad Request           |
 
 ## Plan de Implementación
 
