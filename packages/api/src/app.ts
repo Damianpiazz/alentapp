@@ -389,6 +389,11 @@ export function buildApp() {
         paymentController.update.bind(paymentController),
     );
 
+    server.delete(
+        '/api/v1/payments/:id',
+        paymentController.delete.bind(paymentController),
+    );
+
     // =========================
     // HEALTHCHECK
     // =========================
