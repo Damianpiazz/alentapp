@@ -16,6 +16,10 @@ export class PaymentValidator {
                 `Faltan datos obligatorios: ${missingFields.join(', ')}`,
             );
         }
+
+        if (data.amount <= 0) {
+            throw new Error('El monto debe ser mayor a cero');
+        }
     }
 
     // TDD-0014: Validar idempotencia para la actualización/cobro

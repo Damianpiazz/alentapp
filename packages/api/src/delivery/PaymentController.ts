@@ -68,6 +68,11 @@ export class PaymentController {
                 return reply.status(400).send({ error: err.message });
             }
 
+            // 400: Validación de monto negativo o cero
+            if (err.message === 'El monto debe ser mayor a cero') {
+                return reply.status(400).send({ error: err.message });
+            }
+
             // 500: Error de base de datos
             request.log.error(error);
             return reply
