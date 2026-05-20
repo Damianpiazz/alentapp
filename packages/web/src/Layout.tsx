@@ -81,7 +81,7 @@ function Layout() {
                                 Préstamos
                             </Text>
                         </RouterLink>
-                        <RouterLink to="/lockers">
+                        <RouterLink to="/sports">
                             <Text
                                 fontWeight="semibold"
                                 fontSize="sm"
@@ -96,7 +96,7 @@ function Layout() {
                                 Deportes
                             </Text>
                         </RouterLink>
-                        <RouterLink to="/lockers">
+                        <RouterLink to="/disciplines">
                             <Text
                                 fontWeight="semibold"
                                 fontSize="sm"
