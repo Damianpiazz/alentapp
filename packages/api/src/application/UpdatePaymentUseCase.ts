@@ -18,6 +18,9 @@ export class UpdatePaymentUseCase {
         // 2. Validamos la idempotencia (que no esté ya 'Paid' o 'Canceled')
         this.paymentValidator.validateForUpdate(existingPayment.status);
 
+        // validacion de campos
+        this.paymentValidator.validateUpdateFields(data);
+
         // 3. Preparamos los datos a actualizar
         const paymentDataToUpdate = { ...data };
 

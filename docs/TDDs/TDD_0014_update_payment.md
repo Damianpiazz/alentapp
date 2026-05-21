@@ -52,12 +52,13 @@ Se utilizará el paquete compartido para definir el cuerpo de la petición. Todo
 
 ## Casos de Borde y Errores
 
-| Escenario               | Resultado Esperado                                      | Código HTTP               |
-| ------------------------| --------------------------------------------------------| --------------------------|
-| Pago inexistente        | Mensaje: "El pago no existe"                            | 400 Bad Request           |
-| El pago ya está `Paid`  | Mensaje: "El pago ya se encuentra procesado"            | 409 Conflict              |
-| El pago está `Canceled` | Mensaje: "No se puede modificar un pago que fue anulado"| 409 Conflict              |
-| Error de conexión a DB  | Mensaje: "Error interno, reintente más tarde"           | 500 Internal Server Error |
+| Escenario                        | Resultado Esperado                                       | Código HTTP               |
+| -------------------------------- | -------------------------------------------------------- | ------------------------- |
+| Pago inexistente                 | Mensaje: "El pago no existe"                             | 400 Bad Request           |
+| El pago ya está `Paid`           | Mensaje: "El pago ya se encuentra procesado"             | 409 Conflict              |
+| El pago está `Canceled`          | Mensaje: "No se puede modificar un pago que fue anulado" | 409 Conflict              |
+| Error de conexión a DB           | Mensaje: "Error interno, reintente más tarde"            | 500 Internal Server Error |
+| El monto es menor o igual a cero | Mensaje: "El monto debe ser mayor a cero"                | 400 Bad Request           |
 
 ## Plan de Implementación
 
