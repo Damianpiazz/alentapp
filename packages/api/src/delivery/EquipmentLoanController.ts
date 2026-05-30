@@ -39,7 +39,7 @@ export class EquipmentLoanController {
             return reply.status(201).send({ data: prestamo });
         } catch (error: any) {
             if (
-                error.message.includes('cadete') ||
+                error.message.includes('Cadete') ||
                 error.message.includes('inválido')
             ) {
                 return reply.status(400).send({ error: error.message });

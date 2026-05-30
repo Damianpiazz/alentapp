@@ -132,5 +132,21 @@ describe('EquipmentLoan API Integration Tests', () => {
             const body = JSON.parse(response.payload);
             expect(body.error).toBeDefined();
         });
+
+        it('debe retornar 400 si el socio es de categoría Cadete', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/prestamos',
+                payload: {
+                    item_name: 'Pelota de fútbol',
+                    due_date: '2026-07-15',
+                    member_id: '2',
+                },
+            });
+
+            expect(response.statusCode).toBe(400);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toContain('Cadete');
+        });
     });
 });
