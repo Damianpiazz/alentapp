@@ -149,4 +149,19 @@ describe('EquipmentLoan API Integration Tests', () => {
             expect(body.error).toContain('Cadete');
         });
     });
+
+    describe('GET /api/v1/prestamos', () => {
+        it('debe retornar 200 y la lista de préstamos', async () => {
+            const response = await app.inject({
+                method: 'GET',
+                url: '/api/v1/prestamos',
+            });
+
+            expect(response.statusCode).toBe(200);
+            const body = JSON.parse(response.payload);
+            expect(body.data).toBeInstanceOf(Array);
+            expect(body.data.length).toBeGreaterThanOrEqual(1);
+            expect(body.data[0].item_name).toBe('Pelota');
+        });
+    });
 });
