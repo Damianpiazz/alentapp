@@ -71,7 +71,7 @@ export class EquipmentLoanController {
             );
             return reply.status(200).send({ data: updatedLoan });
         } catch (error: any) {
-            if (error.message.includes('No existe')) {
+            if (error.message.includes('no existe')) {
                 return reply.status(404).send({ error: error.message });
             }
             if (error.message.includes('devuelto')) {
