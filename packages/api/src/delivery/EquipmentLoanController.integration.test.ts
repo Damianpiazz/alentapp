@@ -179,4 +179,16 @@ describe('EquipmentLoan API Integration Tests', () => {
             expect(body.data.status).toBe('Returned');
         });
     });
+
+    describe('DELETE /api/v1/prestamos/:id', () => {
+        it('debe retornar 204 si la eliminación es exitosa', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/prestamos/1',
+            });
+
+            expect(response.statusCode).toBe(204);
+            expect(response.payload).toBe('');
+        });
+    });
 });
