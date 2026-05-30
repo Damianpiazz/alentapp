@@ -116,5 +116,21 @@ describe('EquipmentLoan API Integration Tests', () => {
             expect(body.data.id).toBe('new-loan');
             expect(body.data.status).toBe('Loaned');
         });
+
+        it('debe retornar 404 si el member_id no existe', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/prestamos',
+                payload: {
+                    item_name: 'Pelota de fútbol',
+                    due_date: '2026-07-15',
+                    member_id: '999',
+                },
+            });
+
+            expect(response.statusCode).toBe(404);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBeDefined();
+        });
     });
 });
