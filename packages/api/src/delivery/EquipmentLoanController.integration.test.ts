@@ -164,4 +164,19 @@ describe('EquipmentLoan API Integration Tests', () => {
             expect(body.data[0].item_name).toBe('Pelota');
         });
     });
+
+    describe('PUT /api/v1/prestamos/:id', () => {
+        it('debe retornar 200 y actualizar el estado del préstamo', async () => {
+            const response = await app.inject({
+                method: 'PUT',
+                url: '/api/v1/prestamos/1',
+                payload: { status: 'Returned' },
+            });
+
+            expect(response.statusCode).toBe(200);
+            const body = JSON.parse(response.payload);
+            expect(body.data).toBeDefined();
+            expect(body.data.status).toBe('Returned');
+        });
+    });
 });
