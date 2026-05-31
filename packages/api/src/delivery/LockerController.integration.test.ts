@@ -3,6 +3,18 @@ import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
 import { CreateLockerRequest } from '@alentapp/shared';
 
+/*1- Verifica que el endpoint de listado de lockers responda correctamente y retorne HTTP 200.
+
+2- Valida la creación exitosa de un locker con datos válidos verificando respuesta HTTP 201.
+
+3- Comprueba que el sistema rechace lockers duplicados devolviendo HTTP 400.
+
+4- Verifica la actualización correcta de un locker existente devolviendo HTTP 200.
+
+5- Valida que no puedan modificarse lockers inexistentes devolviendo HTTP 404.
+
+6- Verifica que el sistema rechace eliminar lockers que ya se encuentran disponibles devolviendo HTTP 409. */
+
 vi.mock('../infrastructure/PostgresLockerRepository.js', () => ({
     PostgresLockerRepository: class {
         // listado de lockers
@@ -53,7 +65,12 @@ vi.mock('../infrastructure/PostgresLockerRepository.js', () => ({
         }
 
         // simula eliminación
-        async delete() {}
+        // simula eliminación exitosa
+        async delete(id: string) {
+            if (id !== '1') {
+                throw new Error('Locker no encontrado');
+            }
+        }
     },
 }));
 
@@ -172,10 +189,11 @@ describe('Locker Integration', () => {
         expect(r.statusCode).toBe(404);
     });
 
-    it('DELETE locker', async () => {
-        // intenta eliminar locker
+    it('DELETE locker existente', async () => {
+        // intenta eliminar locker existente
         const r = await app.inject({
             method: 'DELETE',
+
             url: '/api/v1/lockers/1',
         });
 
