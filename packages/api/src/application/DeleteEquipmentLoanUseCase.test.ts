@@ -14,12 +14,15 @@ describe('DeleteEquipmentLoanUseCase', () => {
         vi.clearAllMocks();
     });
 
-    it('debe lanzar error si el préstamo no existe', async () => {
-        vi.mocked(mockLoanRepo.findById).mockResolvedValueOnce(null);
+    it('debe eliminar el préstamo exitosamente', async () => {
+        await useCase.execute('loan-1');
 
-        await expect(useCase.execute('loan-999')).rejects.toThrow(
-            'El préstamo no existe',
-        );
-        expect(mockLoanRepo.delete).not.toHaveBeenCalled();
+        expect(mockLoanRepo.delete).toHaveBeenCalledWith('loan-1');
+    });
+
+    it('debe ser idempotente si el préstamo no existe', async () => {
+        await expect(useCase.execute('loan-999')).resolves.toBeUndefined();
+
+        expect(mockLoanRepo.delete).toHaveBeenCalledWith('loan-999');
     });
 });
