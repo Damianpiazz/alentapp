@@ -18,16 +18,27 @@ vi.mock('../infrastructure/PostgresEquipmentLoanRepository.js', () => {
                 ];
             }
             async findById(id: string) {
-                return id === '1'
-                    ? {
-                          id: '1',
-                          item_name: 'Pelota',
-                          status: 'Loaned',
-                          loan_date: new Date('2026-05-29'),
-                          due_date: new Date('2026-07-15'),
-                          member_id: '1',
-                      }
-                    : null;
+                if (id === '1') {
+                    return {
+                        id: '1',
+                        item_name: 'Pelota',
+                        status: 'Loaned',
+                        loan_date: new Date('2026-05-29'),
+                        due_date: new Date('2026-07-15'),
+                        member_id: '1',
+                    };
+                }
+                if (id === '2') {
+                    return {
+                        id: '2',
+                        item_name: 'Pelota',
+                        status: 'Returned',
+                        loan_date: new Date('2026-05-29'),
+                        due_date: new Date('2026-07-15'),
+                        member_id: '1',
+                    };
+                }
+                return null;
             }
             async create(data: any) {
                 return {
@@ -133,6 +144,38 @@ describe('EquipmentLoan API Integration Tests', () => {
             expect(body.error).toBeDefined();
         });
 
+        it('debe retornar 400 si el item_name está vacío', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/prestamos',
+                payload: {
+                    item_name: '',
+                    due_date: '2026-07-15',
+                    member_id: '1',
+                },
+            });
+
+            expect(response.statusCode).toBe(400);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBeDefined();
+        });
+
+        it('debe retornar 400 si el due_date está en el pasado', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/prestamos',
+                payload: {
+                    item_name: 'Pelota',
+                    due_date: '2020-01-01',
+                    member_id: '1',
+                },
+            });
+
+            expect(response.statusCode).toBe(400);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBeDefined();
+        });
+
         it('debe retornar 400 si el socio es de categoría Cadete', async () => {
             const response = await app.inject({
                 method: 'POST',
@@ -178,6 +221,32 @@ describe('EquipmentLoan API Integration Tests', () => {
             expect(body.data).toBeDefined();
             expect(body.data.status).toBe('Returned');
         });
+
+        it('debe retornar 404 si el préstamo no existe', async () => {
+            const response = await app.inject({
+                method: 'PUT',
+                url: '/api/v1/prestamos/999',
+                payload: { status: 'Returned' },
+            });
+
+            expect(response.statusCode).toBe(404);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toContain('no existe');
+        });
+
+        it('debe retornar 409 si el préstamo no está en estado Loaned', async () => {
+            const response = await app.inject({
+                method: 'PUT',
+                url: '/api/v1/prestamos/2',
+                payload: { status: 'Demaged' },
+            });
+
+            expect(response.statusCode).toBe(409);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toContain(
+                'Solo se pueden actualizar préstamos en estado Loaned',
+            );
+        });
     });
 
     describe('DELETE /api/v1/prestamos/:id', () => {
@@ -185,6 +254,16 @@ describe('EquipmentLoan API Integration Tests', () => {
             const response = await app.inject({
                 method: 'DELETE',
                 url: '/api/v1/prestamos/1',
+            });
+
+            expect(response.statusCode).toBe(204);
+            expect(response.payload).toBe('');
+        });
+
+        it('debe retornar 204 si el préstamo no existe (idempotente)', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/prestamos/999',
             });
 
             expect(response.statusCode).toBe(204);
