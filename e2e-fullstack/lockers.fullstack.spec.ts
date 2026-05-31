@@ -25,7 +25,7 @@ test.describe('Lockers Full-Stack E2E', () => {
         });
 
         // verifico tabla vacía
-        await expect(page.getByText(/no.*locker/i)).toBeVisible();
+        await expect(page.locator('tbody tr')).toHaveCount(0);
     });
 
     test('debe crear un locker real y mostrarlo en tabla', async ({ page }) => {
