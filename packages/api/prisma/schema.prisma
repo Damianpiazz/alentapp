@@ -78,14 +78,15 @@ model Locker {
 }
 
 model EquipmentLoan {
-    id        String                @id @default(uuid())
-    item_name String
-    status    EquipmentLoanStatus   @default(Loaned)
-    loan_date DateTime
-    due_date  DateTime
-    member_id String
-    member    Member                @relation(fields: [member_id], references: [id])
+    id         String                @id @default(uuid())
+    item_name  String
+    status     EquipmentLoanStatus   @default(Loaned)
+    loan_date  DateTime
+    due_date   DateTime
+    member_id  String
+    member     Member                @relation(fields: [member_id], references: [id])
     created_at DateTime              @default(now())
+    deleted_at DateTime?
 
     @@map("equipment_loans")
 }
