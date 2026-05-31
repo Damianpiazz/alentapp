@@ -17,7 +17,7 @@ export class CreatePaymentUseCase {
         const member = await this.memberRepository.findById(data.member_id);
 
         if (!member) {
-            throw new Error('El socio especificado no existe.');
+            throw new Error('Socio no encontrado');
         }
 
         // 2. Persistencia a través de la interfaz (sin saber qué DB es)

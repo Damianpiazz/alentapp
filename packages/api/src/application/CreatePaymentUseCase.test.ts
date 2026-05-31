@@ -131,7 +131,7 @@ describe('CreatePaymentUseCase', () => {
         vi.mocked(mockMemberRepo.findById).mockResolvedValueOnce(null);
 
         await expect(useCase.execute(validRequest)).rejects.toThrow(
-            'El socio especificado no existe.',
+            'Socio no encontrado',
         );
         expect(mockPaymentRepo.create).not.toHaveBeenCalled();
     });
