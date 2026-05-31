@@ -39,8 +39,9 @@ export class EquipmentLoanController {
             return reply.status(201).send({ data: prestamo });
         } catch (error: any) {
             if (
-                error.message.includes('cadete') ||
-                error.message.includes('inválido')
+                error.message.includes('Cadete') ||
+                error.message.includes('inválido') ||
+                error.message.includes('fecha de devolución')
             ) {
                 return reply.status(400).send({ error: error.message });
             }
@@ -74,6 +75,9 @@ export class EquipmentLoanController {
             if (error.message.includes('no existe')) {
                 return reply.status(404).send({ error: error.message });
             }
+            if (error.message.includes('Loaned')) {
+                return reply.status(409).send({ error: error.message });
+            }
             if (error.message.includes('devuelto')) {
                 return reply.status(400).send({ error: error.message });
             }
@@ -91,9 +95,12 @@ export class EquipmentLoanController {
         try {
             const { id } = request.params;
             await this.deleteEquipmentLoanUseCase.execute(id);
-            return reply.status(204).send(); // No Content
+            return reply.status(204).send();
         } catch (error: any) {
-            return reply.status(400).send({ error: error.message });
+            request.log.error(error);
+            return reply
+                .status(500)
+                .send({ error: 'Error al eliminar el préstamo de equipo' });
         }
     }
 }
