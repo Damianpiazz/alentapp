@@ -73,5 +73,29 @@ describe('EquipmentLoanValidator', () => {
             ).rejects.toThrow('Cadete');
             expect(mockMemberRepo.findById).toHaveBeenCalledWith('member-1');
         });
+
+        it('debe pasar la validación si el socio es de categoría Pleno', async () => {
+            vi.mocked(mockMemberRepo.findById).mockResolvedValueOnce({
+                id: 'member-1',
+                category: 'Pleno',
+            } as any);
+
+            await expect(
+                validator.validateMemberCategory('member-1'),
+            ).resolves.toBeUndefined();
+            expect(mockMemberRepo.findById).toHaveBeenCalledWith('member-1');
+        });
+
+        it('debe pasar la validación si el socio es de categoría Honorario', async () => {
+            vi.mocked(mockMemberRepo.findById).mockResolvedValueOnce({
+                id: 'member-1',
+                category: 'Honorario',
+            } as any);
+
+            await expect(
+                validator.validateMemberCategory('member-1'),
+            ).resolves.toBeUndefined();
+            expect(mockMemberRepo.findById).toHaveBeenCalledWith('member-1');
+        });
     });
 });
