@@ -10,6 +10,7 @@ describe('Equipment Loan API End-to-End Tests', () => {
     let prisma: PrismaClient;
     let createdLoanId: string;
     let createdMemberId: string;
+    let cadeteMemberId: string;
 
     const randomSuffix = Math.floor(Math.random() * 100000).toString();
 
@@ -39,15 +40,20 @@ describe('Equipment Loan API End-to-End Tests', () => {
     });
 
     afterAll(async () => {
-        // Limpiamos la base de datos (Tear down) eliminando los registros
-        if (createdLoanId) {
-            await prisma.equipmentLoan.deleteMany({
-                where: { id: createdLoanId },
-            });
-        }
         if (createdMemberId) {
+            await prisma.equipmentLoan.deleteMany({
+                where: { member_id: createdMemberId },
+            });
             await prisma.member.deleteMany({
                 where: { id: createdMemberId },
+            });
+        }
+        if (cadeteMemberId) {
+            await prisma.equipmentLoan.deleteMany({
+                where: { member_id: cadeteMemberId },
+            });
+            await prisma.member.deleteMany({
+                where: { id: cadeteMemberId },
             });
         }
         await prisma.$disconnect();
@@ -101,7 +107,7 @@ describe('Equipment Loan API End-to-End Tests', () => {
         expect(dbLoan?.status).toBe('Loaned');
     });
 
-    it('3. POST: Debe fallar al crear si el member_id no existe en la DB real', async () => {
+    it('3. POST: Debe fallar al crear si el member_id no existe', async () => {
         const futureDate = new Date();
         futureDate.setDate(futureDate.getDate() + 30);
 
@@ -158,7 +164,155 @@ describe('Equipment Loan API End-to-End Tests', () => {
         });
         expect(dbLoan?.deleted_at).not.toBeNull();
 
-        // Anular variable para que afterAll no intente borrarlo nuevamente
         createdLoanId = '';
+    });
+
+    it('6. POST: Debe fallar si item_name está vacío (400)', async () => {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+
+        const response = await app.inject({
+            method: 'POST',
+            url: '/api/v1/prestamos',
+            payload: {
+                item_name: '',
+                due_date: futureDate.toISOString(),
+                member_id: createdMemberId,
+            },
+        });
+
+        expect(response.statusCode).toBe(400);
+        const body = JSON.parse(response.payload);
+        expect(body.error).toBe('El nombre del ítem es muy corto o inválido');
+    });
+
+    it('7. POST: Debe fallar si due_date está en el pasado (400)', async () => {
+        const pastDate = new Date('2020-01-01');
+
+        const response = await app.inject({
+            method: 'POST',
+            url: '/api/v1/prestamos',
+            payload: {
+                item_name: 'Pelota',
+                due_date: pastDate.toISOString(),
+                member_id: createdMemberId,
+            },
+        });
+
+        expect(response.statusCode).toBe(400);
+        const body = JSON.parse(response.payload);
+        expect(body.error).toBe(
+            'La fecha de devolución debe ser posterior a la fecha de préstamo',
+        );
+    });
+
+    it('8. POST: Debe fallar si el socio es categoría Cadete (400)', async () => {
+        const cadeteMember = await prisma.member.create({
+            data: {
+                dni: `E2E_CADETE_${randomSuffix}`,
+                name: 'Cadete Member',
+                email: `cadete_e2e${randomSuffix}@test.com`,
+                birthdate: new Date('1990-01-01'),
+                category: 'Cadete',
+                status: 'Activo',
+            },
+        });
+        cadeteMemberId = cadeteMember.id;
+
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+
+        const response = await app.inject({
+            method: 'POST',
+            url: '/api/v1/prestamos',
+            payload: {
+                item_name: 'Pelota',
+                due_date: futureDate.toISOString(),
+                member_id: cadeteMember.id,
+            },
+        });
+
+        expect(response.statusCode).toBe(400);
+        const body = JSON.parse(response.payload);
+        expect(body.error).toBe(
+            'Si el miembro es de categoría "Cadete" no pueden solicitar préstamos',
+        );
+    });
+
+    it('9. PUT: Debe fallar si el préstamo no existe (404)', async () => {
+        const response = await app.inject({
+            method: 'PUT',
+            url: `/api/v1/prestamos/00000000-0000-0000-0000-000000000000`,
+            payload: { status: 'Returned' },
+        });
+
+        expect(response.statusCode).toBe(404);
+        const body = JSON.parse(response.payload);
+        expect(body.error).toBe('El préstamo no existe');
+    });
+
+    it('10. PUT: Debe fallar si el préstamo no está en estado Loaned (409)', async () => {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+
+        const createRes = await app.inject({
+            method: 'POST',
+            url: '/api/v1/prestamos',
+            payload: {
+                item_name: 'Temp loan for 409 test',
+                due_date: futureDate.toISOString(),
+                member_id: createdMemberId,
+            },
+        });
+        expect(createRes.statusCode).toBe(201);
+        const tempLoanId = JSON.parse(createRes.payload).data.id;
+
+        const updateReturnedRes = await app.inject({
+            method: 'PUT',
+            url: `/api/v1/prestamos/${tempLoanId}`,
+            payload: { status: 'Returned' },
+        });
+        expect(updateReturnedRes.statusCode).toBe(200);
+
+        const response = await app.inject({
+            method: 'PUT',
+            url: `/api/v1/prestamos/${tempLoanId}`,
+            payload: { status: 'Returned' },
+        });
+
+        expect(response.statusCode).toBe(409);
+        const body = JSON.parse(response.payload);
+        expect(body.error).toBe(
+            'Solo se pueden actualizar préstamos en estado Loaned',
+        );
+    });
+
+    it('11. DELETE: Debe ser idempotente si el préstamo ya fue eliminado (204)', async () => {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+
+        const createRes = await app.inject({
+            method: 'POST',
+            url: '/api/v1/prestamos',
+            payload: {
+                item_name: 'Temp loan for idempotent delete',
+                due_date: futureDate.toISOString(),
+                member_id: createdMemberId,
+            },
+        });
+        expect(createRes.statusCode).toBe(201);
+        const tempLoanId = JSON.parse(createRes.payload).data.id;
+
+        const firstDelete = await app.inject({
+            method: 'DELETE',
+            url: `/api/v1/prestamos/${tempLoanId}`,
+        });
+        expect(firstDelete.statusCode).toBe(204);
+
+        const secondDelete = await app.inject({
+            method: 'DELETE',
+            url: `/api/v1/prestamos/${tempLoanId}`,
+        });
+        expect(secondDelete.statusCode).toBe(204);
     });
 });
