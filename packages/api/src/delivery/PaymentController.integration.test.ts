@@ -225,11 +225,17 @@ describe('Payment API Integration Tests', () => {
 
             const response = await app.inject({
                 method: 'PUT',
-                url: '/api/v1/payments/1', // ID 1 = Pending en el mock
+                url: '/api/v1/payments/1',
                 payload,
             });
 
             expect(response.statusCode).toBe(200);
+
+            const body = JSON.parse(response.payload);
+
+            expect(body.data.status).toBe('Paid');
+            expect(body.data.payment_date).toBeDefined();
+            expect(typeof body.data.payment_date).toBe('string');
         });
 
         //test8
@@ -247,6 +253,22 @@ describe('Payment API Integration Tests', () => {
             expect(response.statusCode).toBe(409);
             const body = JSON.parse(response.payload);
             expect(body.error).toBe('El pago ya se encuentra procesado');
+        });
+
+        //test9
+        it('debe retornar 400 si el pago a actualizar no existe', async () => {
+            const response = await app.inject({
+                method: 'PUT',
+                url: '/api/v1/payments/999',
+                payload: {
+                    status: 'Paid',
+                },
+            });
+
+            expect(response.statusCode).toBe(400);
+
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El pago no existe');
         });
     });
 
