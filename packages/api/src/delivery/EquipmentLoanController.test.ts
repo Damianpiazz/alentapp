@@ -25,6 +25,7 @@ describe('EquipmentLoanController', () => {
             item_name: 'Pelota de fútbol',
             due_date: '2026-06-15',
             member_id: 'member-1',
+            status: 'Returned',
         },
         params: { id: 'loan-1' },
     };
@@ -63,6 +64,19 @@ describe('EquipmentLoanController', () => {
                 error: 'No existe un miembro con ese id',
             });
         });
+
+        it('debe devolver status 500 si ocurre un error de base de datos al crear', async () => {
+            mockCreateUseCase.execute.mockRejectedValueOnce(
+                new Error('Error de conexión'),
+            );
+
+            await controller.create(mockRequest as any, mockReply as any);
+
+            expect(mockReply.status).toHaveBeenCalledWith(500);
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: 'Error al crear el préstamo de equipo',
+            });
+        });
     });
 
     describe('getAll', () => {
@@ -89,7 +103,7 @@ describe('EquipmentLoanController', () => {
 
             expect(mockUpdateUseCase.execute).toHaveBeenCalledWith(
                 'loan-1',
-                undefined,
+                'Returned',
             );
             expect(mockReply.status).toHaveBeenCalledWith(200);
             expect(mockReply.send).toHaveBeenCalledWith({ data: updatedLoan });
@@ -107,6 +121,34 @@ describe('EquipmentLoanController', () => {
                 error: 'El préstamo no existe',
             });
         });
+
+        it('debe devolver status 409 si el préstamo no está en estado Loaned', async () => {
+            mockUpdateUseCase.execute.mockRejectedValueOnce(
+                new Error(
+                    'Solo se pueden actualizar préstamos en estado Loaned',
+                ),
+            );
+
+            await controller.update(mockRequest as any, mockReply as any);
+
+            expect(mockReply.status).toHaveBeenCalledWith(409);
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: 'Solo se pueden actualizar préstamos en estado Loaned',
+            });
+        });
+
+        it('debe devolver status 500 si ocurre un error de base de datos', async () => {
+            mockUpdateUseCase.execute.mockRejectedValueOnce(
+                new Error('Error de conexión'),
+            );
+
+            await controller.update(mockRequest as any, mockReply as any);
+
+            expect(mockReply.status).toHaveBeenCalledWith(500);
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: 'Error al actualizar el préstamo de equipo',
+            });
+        });
     });
 
     describe('delete', () => {
@@ -119,16 +161,16 @@ describe('EquipmentLoanController', () => {
             expect(mockReply.send).toHaveBeenCalledWith();
         });
 
-        it('debe devolver status 400 si el préstamo no existe', async () => {
+        it('debe devolver status 500 si ocurre un error de base de datos', async () => {
             mockDeleteUseCase.execute.mockRejectedValueOnce(
-                new Error('El préstamo no existe'),
+                new Error('Error de conexión'),
             );
 
             await controller.delete(mockRequest as any, mockReply as any);
 
-            expect(mockReply.status).toHaveBeenCalledWith(400);
+            expect(mockReply.status).toHaveBeenCalledWith(500);
             expect(mockReply.send).toHaveBeenCalledWith({
-                error: 'El préstamo no existe',
+                error: 'Error al eliminar el préstamo de equipo',
             });
         });
     });

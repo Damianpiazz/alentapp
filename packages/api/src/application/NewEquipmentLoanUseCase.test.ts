@@ -66,6 +66,30 @@ describe('NewEquipmentLoanUseCase', () => {
         expect(result.status).toBe('Loaned');
     });
 
+    it('debe lanzar error y no persistir si validateItemName falla (item_name vacío)', async () => {
+        vi.mocked(mockValidator.validateItemName).mockImplementationOnce(() => {
+            throw new Error('El nombre del ítem es muy corto o inválido');
+        });
+
+        await expect(useCase.execute(mockRequest)).rejects.toThrow(
+            'El nombre del ítem es muy corto o inválido',
+        );
+        expect(mockLoanRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('debe lanzar error y no persistir si validateDueDate falla (fecha en el pasado)', async () => {
+        vi.mocked(mockValidator.validateDueDate).mockImplementationOnce(() => {
+            throw new Error(
+                'La fecha de devolución debe ser posterior a la fecha de préstamo',
+            );
+        });
+
+        await expect(useCase.execute(mockRequest)).rejects.toThrow(
+            'La fecha de devolución debe ser posterior a la fecha de préstamo',
+        );
+        expect(mockLoanRepo.create).not.toHaveBeenCalled();
+    });
+
     it('debe lanzar error y no persistir si validateMemberId falla (miembro no existe)', async () => {
         vi.mocked(mockValidator.validateMemberId).mockRejectedValueOnce(
             new Error('No existe un miembro con ese id'),

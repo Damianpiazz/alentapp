@@ -16,6 +16,13 @@ export class UpdateEquipmentLoanUseCase {
             throw new Error('El préstamo no existe');
         }
 
+        // Validar que el préstamo esté en estado Loaned
+        if (existingLoan.status !== 'Loaned') {
+            throw new Error(
+                'Solo se pueden actualizar préstamos en estado Loaned',
+            );
+        }
+
         // Validar el estado
         this.equipmentLoanValidator.validateState(status);
         // Cambiar string a EquipmentLoanStatus type

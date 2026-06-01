@@ -20,6 +20,16 @@ describe('DeleteEquipmentLoanUseCase', () => {
         expect(mockLoanRepo.delete).toHaveBeenCalledWith('loan-1');
     });
 
+    it('debe lanzar error si ocurre un fallo en la base de datos', async () => {
+        vi.mocked(mockLoanRepo.delete).mockRejectedValueOnce(
+            new Error('Error de conexión'),
+        );
+
+        await expect(useCase.execute('loan-1')).rejects.toThrow(
+            'Error de conexión',
+        );
+    });
+
     it('debe ser idempotente si el préstamo no existe', async () => {
         await expect(useCase.execute('loan-999')).resolves.toBeUndefined();
 
