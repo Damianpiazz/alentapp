@@ -115,4 +115,31 @@ describe('UpdatePaymentUseCase', () => {
             updateData,
         );
     });
+
+    //test5
+    it('debe actualizar el estado a Canceled sin asignar payment_date', async () => {
+        const updateData: UpdatePaymentRequest = {
+            status: 'Canceled',
+        };
+
+        vi.mocked(mockPaymentRepo.update).mockResolvedValueOnce({
+            ...mockPayment,
+            status: 'Canceled',
+        } as unknown as PaymentDTO);
+
+        const result = await useCase.execute('payment-123', updateData);
+
+        expect(mockPaymentValidator.validateForUpdate).toHaveBeenCalledWith(
+            'Pending',
+        );
+
+        expect(result.status).toBe('Canceled');
+
+        expect(mockPaymentRepo.update).toHaveBeenCalledWith(
+            'payment-123',
+            expect.not.objectContaining({
+                payment_date: expect.any(String),
+            }),
+        );
+    });
 });
