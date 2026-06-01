@@ -2,13 +2,10 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import {
     EquipmentLoanStatus,
     PrismaClient,
+    Prisma,
 } from '../generated/client/client.js';
 import { EquipmentLoanRepository } from '../domain/EquipmentLoanRepository.js';
-import {
-    EquipmentLoanDTO,
-    CreateEquipmentLoanRequest,
-    UpdateEquipmentLoanRequest,
-} from '@alentapp/shared';
+import { EquipmentLoanDTO, CreateEquipmentLoanRequest } from '@alentapp/shared';
 
 if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
@@ -25,6 +22,7 @@ type DBEquipmentLoan = {
     loan_date: Date;
     due_date: Date;
     member_id: string;
+    deleted_at: Date | null;
 };
 
 export class PostgresEquipmentLoanRepository implements EquipmentLoanRepository {
@@ -44,7 +42,7 @@ export class PostgresEquipmentLoanRepository implements EquipmentLoanRepository 
 
     async findById(id: string): Promise<EquipmentLoanDTO | null> {
         const loan = await prisma.equipmentLoan.findUnique({
-            where: { id },
+            where: { id, deleted_at: null },
         });
 
         return loan ? this.mapToDTO(loan) : null;
@@ -52,6 +50,7 @@ export class PostgresEquipmentLoanRepository implements EquipmentLoanRepository 
 
     async findAll(): Promise<EquipmentLoanDTO[]> {
         const loans = await prisma.equipmentLoan.findMany({
+            where: { deleted_at: null },
             orderBy: { loan_date: 'desc' },
         });
 
@@ -83,8 +82,19 @@ export class PostgresEquipmentLoanRepository implements EquipmentLoanRepository 
     }
 
     async delete(id: string): Promise<void> {
-        await prisma.equipmentLoan.delete({
-            where: { id },
-        });
+        try {
+            await prisma.equipmentLoan.update({
+                where: { id, deleted_at: null },
+                data: { deleted_at: new Date() },
+            });
+        } catch (error: unknown) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2025'
+            ) {
+                return;
+            }
+            throw error;
+        }
     }
 }
