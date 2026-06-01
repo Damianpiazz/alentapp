@@ -53,5 +53,29 @@ describe('PaymentValidator', () => {
                 'No se puede modificar un pago que fue anulado',
             );
         });
+
+        //test4
+        it('debe lanzar error si el monto a actualizar es menor o igual a cero', () => {
+            expect(() =>
+                validator.validateUpdateFields({
+                    amount: 0,
+                }),
+            ).toThrow('El monto debe ser mayor a cero');
+
+            expect(() =>
+                validator.validateUpdateFields({
+                    amount: -100,
+                }),
+            ).toThrow('El monto debe ser mayor a cero');
+        });
+    });
+
+    describe('validateForCancel', () => {
+        //test5
+        it('debe lanzar error si el estado actual es Paid', () => {
+            expect(() => validator.validateForCancel('Paid')).toThrow(
+                'No se puede anular un pago ya procesado',
+            );
+        });
     });
 });
