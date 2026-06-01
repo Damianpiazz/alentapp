@@ -83,7 +83,7 @@ export type UpdateLockerRequest = {
 // EquipmentLoan
 // ==========================================
 
-export type EquipmentLoanStatus = 'Loaned' | 'Returned' | 'Demaged';
+export type EquipmentLoanStatus = 'Loaned' | 'Returned' | 'Damaged';
 
 export interface EquipmentLoanDTO {
     id: string; // UUID

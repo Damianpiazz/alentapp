@@ -238,7 +238,7 @@ describe('EquipmentLoan API Integration Tests', () => {
             const response = await app.inject({
                 method: 'PUT',
                 url: '/api/v1/prestamos/2',
-                payload: { status: 'Demaged' },
+                payload: { status: 'Damaged' },
             });
 
             expect(response.statusCode).toBe(409);

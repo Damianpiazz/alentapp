@@ -79,7 +79,7 @@ export function LoansView() {
                 items: [
                     // { label: 'Prestado (Loaned)', value: 'Loaned' },
                     { label: 'Devuelto (Returned)', value: 'Returned' },
-                    { label: 'Dañado (Damaged)', value: 'Demaged' },
+                    { label: 'Dañado (Damaged)', value: 'Damaged' },
                 ],
             }),
         [],

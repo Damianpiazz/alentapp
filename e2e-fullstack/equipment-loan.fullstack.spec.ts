@@ -14,6 +14,7 @@ test.describe('Equipment Loan Full-Stack E2E', () => {
                 name: 'Test E2E Equipment',
                 email: 'equipment@e2e.com',
                 birthdate: '1990-05-15',
+                category: 'Pleno',
             }),
         });
         expect(memberRes.status).toBe(201);

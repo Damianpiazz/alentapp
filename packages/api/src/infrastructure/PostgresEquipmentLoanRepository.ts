@@ -18,7 +18,7 @@ const prisma = new PrismaClient({
 type DBEquipmentLoan = {
     id: string;
     item_name: string;
-    status: 'Loaned' | 'Returned' | 'Demaged';
+    status: 'Loaned' | 'Returned' | 'Damaged';
     loan_date: Date;
     due_date: Date;
     member_id: string;

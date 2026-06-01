@@ -55,7 +55,7 @@ describe('UpdateEquipmentLoanUseCase', () => {
         const returnedLoan = { ...existingLoan, status: 'Returned' as const };
         vi.mocked(mockLoanRepo.findById).mockResolvedValueOnce(returnedLoan);
 
-        await expect(useCase.execute('loan-1', 'Demaged')).rejects.toThrow(
+        await expect(useCase.execute('loan-1', 'Damaged')).rejects.toThrow(
             'Solo se pueden actualizar préstamos en estado Loaned',
         );
         expect(mockValidator.validateState).not.toHaveBeenCalled();
