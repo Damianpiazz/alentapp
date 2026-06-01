@@ -75,16 +75,18 @@ describe('CreatePaymentUseCase', () => {
     it('debe lanzar error si el monto es cero', async () => {
         const invalidRequest = { ...validRequest, amount: 0 };
 
-        // simulo que el validador detecta el error de negocio
         vi.mocked(mockValidator.validateRequiredFields).mockImplementationOnce(
-            () => {
-                throw new Error('El monto debe ser mayor a cero');
+            (data) => {
+                if (data.amount <= 0) {
+                    throw new Error('El monto debe ser mayor a cero');
+                }
             },
         );
 
         await expect(useCase.execute(invalidRequest)).rejects.toThrow(
             'El monto debe ser mayor a cero',
         );
+
         expect(mockMemberRepo.findById).not.toHaveBeenCalled();
     });
 
@@ -92,16 +94,19 @@ describe('CreatePaymentUseCase', () => {
     it('debe lanzar error si el monto es negativo', async () => {
         const invalidRequest = { ...validRequest, amount: -100 };
 
-        // simulo que el validador detecta el error de negocio
         vi.mocked(mockValidator.validateRequiredFields).mockImplementationOnce(
-            () => {
-                throw new Error('El monto debe ser mayor a cero');
+            (data) => {
+                if (data.amount <= 0) {
+                    throw new Error('El monto debe ser mayor a cero');
+                }
             },
         );
 
         await expect(useCase.execute(invalidRequest)).rejects.toThrow(
             'El monto debe ser mayor a cero',
         );
+
+        expect(mockMemberRepo.findById).not.toHaveBeenCalled();
     });
 
     //test4
