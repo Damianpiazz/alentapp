@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { EquipmentLoan } from '../../api/src/generated/client/index.js';
+import { Member } from '../../api/src/generated/client/index.js';
 
 test.describe('Equipment Loan E2E (UI Integration)', () => {
     let mockDbLoans: EquipmentLoan[];
@@ -72,6 +73,18 @@ test.describe('Equipment Loan E2E (UI Integration)', () => {
                         }),
                     });
                 }
+            } else if (method === 'DELETE') {
+                const urlObj = new URL(route.request().url());
+                const id = urlObj.pathname.split('/').pop();
+                const index = mockDbLoans.findIndex(
+                    (l) => String(l.id) === String(id),
+                );
+
+                if (index > -1) {
+                    mockDbLoans.splice(index, 1);
+                }
+                // Idempotente: siempre 204, exista o no el préstamo
+                await route.fulfill({ status: 204 });
             } else if (method === 'OPTIONS') {
                 await route.fulfill({
                     status: 200,
@@ -172,5 +185,35 @@ test.describe('Equipment Loan E2E (UI Integration)', () => {
 
         await expect(page.getByText('Returned')).toBeVisible();
         await expect(page.getByText('Loaned')).toBeHidden();
+    });
+
+    test('debe eliminar el préstamo tras confirmar y mostrar el estado vacío', async ({
+        page,
+    }) => {
+        mockDbLoans.push({
+            id: 'loan-2',
+            item_name: 'Pelota de básquet',
+            status: 'Loaned',
+            loan_date: new Date('2026-05-01').toISOString(),
+            due_date: '2026-12-31T00:00:00.000Z',
+            member_id: 'member-1',
+        });
+
+        await page.goto('/loans');
+
+        // Verificamos que el préstamo existe antes de borrar
+        await expect(page.getByText('Pelota de básquet')).toBeVisible();
+
+        // Aceptamos automáticamente el confirm del navegador
+        page.on('dialog', (dialog) => dialog.accept());
+
+        // Click en el icono de eliminar (tacho de basura)
+        await page.getByRole('button', { name: /Eliminar préstamo/i }).click();
+
+        // Verificamos que el ítem desapareció y se muestra el estado vacío
+        await expect(
+            page.getByText('No hay préstamos registrados.'),
+        ).toBeVisible();
+        await expect(page.getByText('Pelota de básquet')).toBeHidden();
     });
 });

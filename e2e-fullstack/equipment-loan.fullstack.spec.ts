@@ -71,4 +71,27 @@ test.describe('Equipment Loan Full-Stack E2E', () => {
         });
         await expect(page.getByText('Loaned')).toBeHidden();
     });
+
+    test('debe eliminar el préstamo tras confirmar y mostrar el estado vacío', async ({
+        page,
+    }) => {
+        await page.goto('/loans');
+
+        // El préstamo de tests anteriores persiste en la DB
+        await expect(page.getByText('Raqueta de tenis')).toBeVisible({
+            timeout: 10000,
+        });
+
+        // Aceptamos el confirm del navegador automáticamente
+        page.on('dialog', (dialog) => dialog.accept());
+
+        // Click en eliminar
+        await page.getByRole('button', { name: /Eliminar préstamo/i }).click();
+
+        // La lista debería quedar vacía
+        await expect(
+            page.getByText('No hay préstamos registrados.'),
+        ).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText('Raqueta de tenis')).toBeHidden();
+    });
 });
