@@ -64,6 +64,19 @@ describe('EquipmentLoanController', () => {
                 error: 'No existe un miembro con ese id',
             });
         });
+
+        it('debe devolver status 500 si ocurre un error de base de datos al crear', async () => {
+            mockCreateUseCase.execute.mockRejectedValueOnce(
+                new Error('Error de conexión'),
+            );
+
+            await controller.create(mockRequest as any, mockReply as any);
+
+            expect(mockReply.status).toHaveBeenCalledWith(500);
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: 'Error al crear el préstamo de equipo',
+            });
+        });
     });
 
     describe('getAll', () => {
