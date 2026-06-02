@@ -1,132 +1,204 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DisciplineController } from './DisciplineController.js';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { FastifyInstance } from 'fastify';
+import { buildApp } from '../app.js';
 
-describe('DisciplineController', () => {
-    const mockCreateUseCase = { execute: vi.fn() };
-    const mockGetUseCase = { execute: vi.fn() };
-    const mockUpdateUseCase = { execute: vi.fn() };
-    const mockDeleteUseCase = { execute: vi.fn() };
-
-    const controller = new DisciplineController(
-        mockCreateUseCase as never,
-        mockGetUseCase as never,
-        mockUpdateUseCase as never,
-        mockDeleteUseCase as never,
-    );
-
-    const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn(),
-    };
-
-    const mockRequest = {
-        body: {
-            member_id: '1',
-            reason: 'Conducta inapropiada',
-            start_date: '2026-05-01',
-            end_date: '2026-06-01',
-            is_total_suspension: false,
+vi.mock('../infrastructure/PostgresDisciplineRepository.js', () => {
+    return {
+        PostgresDisciplineRepository: class {
+            async findAll() {
+                return [
+                    {
+                        id: '1',
+                        member_id: '1',
+                        reason: 'Conducta inapropiada',
+                        start_date: '2026-05-01',
+                        end_date: '2026-06-01',
+                        is_total_suspension: false,
+                        created_at: new Date().toISOString(),
+                    },
+                ];
+            }
+            async findById(id: string) {
+                return id === '1'
+                    ? {
+                          id: '1',
+                          member_id: '1',
+                          reason: 'Conducta inapropiada',
+                          start_date: '2026-05-01',
+                          end_date: '2026-06-01',
+                          is_total_suspension: false,
+                          created_at: new Date().toISOString(),
+                      }
+                    : null;
+            }
+            async create(data: any) {
+                return {
+                    id: '2',
+                    ...data,
+                    created_at: new Date().toISOString(),
+                };
+            }
+            async update(id: string, data: any) {
+                return { id, ...data };
+            }
+            async delete(_id: string) {
+                return;
+            }
+            async existsMember(memberId: string) {
+                return memberId === '1';
+            }
         },
-        params: { id: '1' },
     };
+});
 
-    beforeEach(() => {
-        vi.clearAllMocks();
+describe('Discipline API Integration Tests', () => {
+    let app: FastifyInstance;
+
+    beforeAll(async () => {
+        app = buildApp();
+        await app.ready();
     });
 
-    describe('create', () => {
-        it('debe devolver 201 si la sanción se crea correctamente', async () => {
-            const mockDiscipline = { id: '1', ...mockRequest.body };
-            mockCreateUseCase.execute.mockResolvedValueOnce(mockDiscipline);
+    afterAll(async () => {
+        await app.close();
+    });
 
-            await controller.create(mockRequest as never, mockReply as never);
-
-            expect(mockReply.status).toHaveBeenCalledWith(201);
-            expect(mockReply.send).toHaveBeenCalledWith({
-                data: mockDiscipline,
+    describe('GET /api/v1/disciplines', () => {
+        it('debe retornar 200 y el listado de sanciones', async () => {
+            const response = await app.inject({
+                method: 'GET',
+                url: '/api/v1/disciplines',
             });
-        });
 
-        it('debe devolver 404 si el socio no existe', async () => {
-            mockCreateUseCase.execute.mockRejectedValueOnce(
-                new Error('El socio indicado no existe'),
-            );
-
-            await controller.create(mockRequest as never, mockReply as never);
-
-            expect(mockReply.status).toHaveBeenCalledWith(404);
-            expect(mockReply.send).toHaveBeenCalledWith({
-                error: 'El socio indicado no existe',
-            });
-        });
-
-        it('debe devolver 400 si las fechas son inválidas', async () => {
-            mockCreateUseCase.execute.mockRejectedValueOnce(
-                new Error('La fecha de fin debe ser posterior a la de inicio'),
-            );
-
-            await controller.create(mockRequest as never, mockReply as never);
-
-            expect(mockReply.status).toHaveBeenCalledWith(400);
-        });
-
-        it('debe devolver 500 ante un error de base de datos', async () => {
-            mockCreateUseCase.execute.mockRejectedValueOnce(
-                new Error('DB error'),
-            );
-
-            await controller.create(mockRequest as never, mockReply as never);
-
-            expect(mockReply.status).toHaveBeenCalledWith(500);
-            expect(mockReply.send).toHaveBeenCalledWith({
-                error: 'Error interno, reintente más tarde',
-            });
+            expect(response.statusCode).toBe(200);
+            const body = JSON.parse(response.payload);
+            expect(body.data).toBeInstanceOf(Array);
+            expect(body.data[0].id).toBe('1');
+            expect(body.data[0].reason).toBe('Conducta inapropiada');
         });
     });
 
-    describe('update', () => {
-        it('debe devolver 200 si la sanción se actualiza correctamente', async () => {
-            const mockUpdated = { id: '1', reason: 'Motivo actualizado' };
-            mockUpdateUseCase.execute.mockResolvedValueOnce(mockUpdated);
+    describe('POST /api/v1/disciplines', () => {
+        it('debe retornar 201 y crear la sanción', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/disciplines',
+                payload: {
+                    member_id: '1', // mockeado como existente en existsMember
+                    reason: 'Conducta inapropiada',
+                    start_date: '2026-05-01',
+                    end_date: '2026-06-01',
+                    is_total_suspension: false,
+                },
+            });
 
-            await controller.update(mockRequest as never, mockReply as never);
-
-            expect(mockReply.status).toHaveBeenCalledWith(200);
-            expect(mockReply.send).toHaveBeenCalledWith({ data: mockUpdated });
+            expect(response.statusCode).toBe(201);
+            const body = JSON.parse(response.payload);
+            expect(body.data.id).toBeDefined();
+            expect(body.data.reason).toBe('Conducta inapropiada');
         });
 
-        it('debe devolver 404 si la sanción no existe', async () => {
-            mockUpdateUseCase.execute.mockRejectedValueOnce(
-                new Error('La sanción no existe'),
+        it('debe retornar 404 si el socio no existe', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/disciplines',
+                payload: {
+                    member_id: 'id-inexistente', // existsMember devuelve false
+                    reason: 'Conducta inapropiada',
+                    start_date: '2026-05-01',
+                    end_date: '2026-06-01',
+                    is_total_suspension: false,
+                },
+            });
+
+            expect(response.statusCode).toBe(404);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El socio indicado no existe');
+        });
+
+        it('debe retornar 400 si las fechas son inválidas', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/disciplines',
+                payload: {
+                    member_id: '1',
+                    reason: 'Conducta inapropiada',
+                    start_date: '2026-06-01',
+                    end_date: '2026-05-01', // anterior al inicio
+                    is_total_suspension: false,
+                },
+            });
+
+            expect(response.statusCode).toBe(400);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe(
+                'La fecha de fin debe ser posterior a la de inicio',
             );
+        });
 
-            await controller.update(mockRequest as never, mockReply as never);
+        it('debe retornar 400 si faltan campos obligatorios', async () => {
+            const response = await app.inject({
+                method: 'POST',
+                url: '/api/v1/disciplines',
+                payload: {
+                    member_id: '1',
+                    reason: '',
+                    start_date: '',
+                    end_date: '',
+                    is_total_suspension: false,
+                },
+            });
 
-            expect(mockReply.status).toHaveBeenCalledWith(404);
+            expect(response.statusCode).toBe(400);
         });
     });
 
-    describe('delete', () => {
-        it('debe devolver 204 si la sanción se elimina correctamente', async () => {
-            mockDeleteUseCase.execute.mockResolvedValueOnce(undefined);
+    describe('PUT /api/v1/disciplines/:id', () => {
+        it('debe retornar 200 si la sanción se actualiza correctamente', async () => {
+            const response = await app.inject({
+                method: 'PUT',
+                url: '/api/v1/disciplines/1',
+                payload: {
+                    reason: 'Motivo actualizado',
+                },
+            });
 
-            await controller.delete(mockRequest as never, mockReply as never);
-
-            expect(mockReply.status).toHaveBeenCalledWith(204);
-            expect(mockReply.send).toHaveBeenCalledWith();
+            expect(response.statusCode).toBe(200);
+            const body = JSON.parse(response.payload);
+            expect(body.data.id).toBe('1');
         });
 
-        it('debe devolver 404 si la sanción no existe', async () => {
-            mockDeleteUseCase.execute.mockRejectedValueOnce(
-                new Error('La sanción no existe'),
-            );
-
-            await controller.delete(mockRequest as never, mockReply as never);
-
-            expect(mockReply.status).toHaveBeenCalledWith(404);
-            expect(mockReply.send).toHaveBeenCalledWith({
-                error: 'La sanción no existe',
+        it('debe retornar 404 si la sanción no existe', async () => {
+            const response = await app.inject({
+                method: 'PUT',
+                url: '/api/v1/disciplines/999',
+                payload: {
+                    reason: 'Motivo actualizado',
+                },
             });
+
+            expect(response.statusCode).toBe(404);
+        });
+    });
+
+    describe('DELETE /api/v1/disciplines/:id', () => {
+        it('debe retornar 204 si se elimina correctamente', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/disciplines/1',
+            });
+
+            expect(response.statusCode).toBe(204);
+            expect(response.payload).toBe('');
+        });
+
+        it('debe retornar 404 si la sanción no existe', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/disciplines/999',
+            });
+
+            expect(response.statusCode).toBe(404);
         });
     });
 });
