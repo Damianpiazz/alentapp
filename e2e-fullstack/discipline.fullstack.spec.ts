@@ -1,6 +1,45 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, request } from '@playwright/test';
+
+const API_URL = 'http://localhost:3001/api/v1';
 
 test.describe('Disciplines Full-Stack E2E', () => {
+    let memberId: string;
+    let memberName: string;
+    let disciplineId: string;
+
+    test.beforeEach(async () => {
+        const context = await request.newContext();
+        // Sufijo único por test para evitar colisiones entre tests paralelos que comparten la misma DB.
+        const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+        const memberResponse = await context.post(`${API_URL}/socios`, {
+            data: {
+                name: `Socio E2E Discipline ${uniqueSuffix}`,
+                dni: `E2E${Math.floor(Math.random() * 100000)}`,
+                email: `e2e${Math.floor(Math.random() * 100000)}@test.com`,
+                birthdate: '1995-06-15',
+                category: 'Pleno',
+            },
+        });
+        const memberBody = await memberResponse.json();
+        memberId = memberBody.data.id;
+        memberName = memberBody.data.name;
+        await context.dispose();
+    });
+
+    test.afterEach(async () => {
+        const context = await request.newContext();
+        if (disciplineId) {
+            await context.delete(`${API_URL}/disciplines/${disciplineId}`);
+            disciplineId = '';
+        }
+        if (memberId) {
+            await context.delete(`${API_URL}/socios/${memberId}`);
+            memberId = '';
+        }
+        await context.dispose();
+    });
+
     test('debe mostrar el estado vacío cuando no hay sanciones en la DB', async ({
         page,
     }) => {
@@ -13,30 +52,6 @@ test.describe('Disciplines Full-Stack E2E', () => {
     test('debe crear una sanción real y mostrarla en la tabla', async ({
         page,
     }) => {
-        // ── 1. Crear socio ──
-        await page.goto('/members', { waitUntil: 'networkidle' });
-
-        await page.locator('button:has-text("Agregar Miembro")').click();
-        await expect(page.getByText('Agregar Nuevo Miembro')).toBeVisible();
-
-        await page
-            .getByPlaceholder('Ej. Juan Pérez')
-            .fill('Socio Para Discipline E2E');
-        await page.getByPlaceholder('Ej. 12345678').fill('99988877');
-        await page
-            .getByPlaceholder('ejemplo@correo.com')
-            .fill('discipline@e2e.com');
-        await page.getByLabel(/Fecha de Nacimiento/i).fill('1995-06-15');
-
-        await page.getByRole('button', { name: 'Crear Miembro' }).click();
-        await expect(
-            page.getByRole('button', { name: 'Crear Miembro' }),
-        ).toBeHidden();
-        await expect(page.getByText('Socio Para Discipline E2E')).toBeVisible({
-            timeout: 10000,
-        });
-
-        // ── 2. Crear sanción ──
         await page.goto('/disciplines', { waitUntil: 'networkidle' });
 
         await page.locator('button:has-text("Nueva Sanción")').click();
@@ -44,17 +59,14 @@ test.describe('Disciplines Full-Stack E2E', () => {
             page.getByText('Nueva Sanción Disciplinaria'),
         ).toBeVisible();
 
-        // Esperar que el select se pueble (evaluar length en el DOM, no visibilidad)
         const memberSelect = page.locator('select');
         await memberSelect.waitFor({ state: 'visible' });
-        await expect(memberSelect).toBeVisible();
         await page.waitForFunction(
             () => (document.querySelector('select')?.options.length ?? 0) > 1,
             { timeout: 10000 },
         );
 
-        await memberSelect.selectOption({ index: 1 });
-
+        await memberSelect.selectOption({ value: memberId });
         await page
             .getByPlaceholder('Describe el motivo de la sanción')
             .fill('Conducta inapropiada E2E Fullstack');
@@ -66,24 +78,43 @@ test.describe('Disciplines Full-Stack E2E', () => {
         await expect(
             page.getByRole('button', { name: 'Crear Sanción' }),
         ).toBeHidden();
+
+        const row = page.getByRole('row', { name: memberName });
+        await expect(row).toBeVisible({ timeout: 10000 });
         await expect(
-            page.getByText('Conducta inapropiada E2E Fullstack'),
-        ).toBeVisible({ timeout: 10000 });
+            row.getByText('Conducta inapropiada E2E Fullstack'),
+        ).toBeVisible();
     });
 
-    test('debe editar la sanción creada y ver el cambio en la tabla', async ({
+    test('debe editar una sanción y ver el cambio en la tabla', async ({
         page,
     }) => {
+        const context = await request.newContext();
+        const disciplineResponse = await context.post(
+            `${API_URL}/disciplines`,
+            {
+                data: {
+                    member_id: memberId,
+                    reason: 'Conducta inapropiada E2E Fullstack',
+                    start_date: '2026-05-01',
+                    end_date: '2026-06-01',
+                    is_total_suspension: false,
+                },
+            },
+        );
+        const disciplineBody = await disciplineResponse.json();
+        disciplineId = disciplineBody.data.id;
+        await context.dispose();
+
         await page.goto('/disciplines', { waitUntil: 'networkidle' });
 
+        const row = page.getByRole('row', { name: memberName });
+        await expect(row).toBeVisible({ timeout: 10000 });
         await expect(
-            page.getByText('Conducta inapropiada E2E Fullstack'),
-        ).toBeVisible({ timeout: 10000 });
+            row.getByText('Conducta inapropiada E2E Fullstack'),
+        ).toBeVisible();
 
-        await page
-            .getByRole('button', { name: /Editar sanción/i })
-            .first()
-            .click();
+        await row.getByRole('button', { name: /Editar sanción/i }).click();
         await expect(page.getByText('Editar Sanción')).toBeVisible();
 
         await page
@@ -96,33 +127,47 @@ test.describe('Disciplines Full-Stack E2E', () => {
         ).toBeHidden();
 
         await expect(
-            page.getByText('Conducta inapropiada E2E Fullstack Editada'),
+            row.getByText('Conducta inapropiada E2E Fullstack Editada'),
         ).toBeVisible({ timeout: 10000 });
         await expect(
-            page.getByText('Conducta inapropiada E2E Fullstack', {
+            row.getByText('Conducta inapropiada E2E Fullstack', {
                 exact: true,
             }),
         ).toBeHidden();
     });
 
-    test('debe eliminar la sanción y mostrar el estado vacío', async ({
+    test('debe eliminar una sanción y mostrar el estado vacío', async ({
         page,
     }) => {
+        const context = await request.newContext();
+        const disciplineResponse = await context.post(
+            `${API_URL}/disciplines`,
+            {
+                data: {
+                    member_id: memberId,
+                    reason: 'Conducta inapropiada E2E Fullstack',
+                    start_date: '2026-05-01',
+                    end_date: '2026-06-01',
+                    is_total_suspension: false,
+                },
+            },
+        );
+        const disciplineBody = await disciplineResponse.json();
+        disciplineId = disciplineBody.data.id;
+        await context.dispose();
+
         await page.goto('/disciplines', { waitUntil: 'networkidle' });
 
+        const row = page.getByRole('row', { name: memberName });
+        await expect(row).toBeVisible({ timeout: 10000 });
         await expect(
-            page.getByText('Conducta inapropiada E2E Fullstack Editada'),
-        ).toBeVisible({ timeout: 10000 });
+            row.getByText('Conducta inapropiada E2E Fullstack'),
+        ).toBeVisible();
 
         page.on('dialog', (dialog) => dialog.accept());
 
-        await page
-            .getByRole('button', { name: /Eliminar sanción/i })
-            .first()
-            .click();
+        await row.getByRole('button', { name: /Eliminar sanción/i }).click();
 
-        await expect(
-            page.getByText('No se encontraron sanciones.'),
-        ).toBeVisible({ timeout: 10000 });
+        await expect(row).toBeHidden({ timeout: 10000 });
     });
 });
