@@ -16,6 +16,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+RUN npx prisma generate --schema=packages/api/prisma/schema.prisma
 RUN npm run build -w packages/api
 
 # Stage 3 (runtime):
@@ -30,6 +31,7 @@ COPY packages/shared/package.json ./packages/shared/
 RUN npm ci --omit=dev --ignore-scripts
 
 COPY --from=build /app/packages/api/dist ./dist
+COPY --from=build /app/packages/api/src/generated ./src/generated
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser

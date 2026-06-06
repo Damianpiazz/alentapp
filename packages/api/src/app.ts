@@ -236,6 +236,10 @@ export function buildApp() {
         };
     });
 
+    server.get('/health', async (request, reply) => {
+        return reply.status(200).send({ status: 'ok' });
+    });
+
     console.log('LOCKER ROUTES REGISTERED');
     console.log(server.printRoutes());
     // =========================
