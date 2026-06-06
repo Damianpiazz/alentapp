@@ -14,7 +14,8 @@
 
 - ¿Qué es OpenTelemetry y cómo se diferencia de Prometheus?
   Open Telemetry es un framework de código abierto neutral para proveedores de Observabilidad, diseñado para instrumentar, generar, recopilar y exportar datos de telemetría como trazas, métricas y logs.
-  OpenTelemetry es un estándar abierto neutral respecto al proveedor para instrumentación, generación, recopilación y exportación de datos de telemetría. Prometheus es un elemento fundamental del paisaje de observabilidad, ampliamente utilizado para la monitorización y alertas dentro de las organizaciones.
+  OpenTelemetry es un estándar abierto neutral respecto al proveedor.
+  Prometheus es un elemento fundamental del paisaje de observabilidad, ampliamente utilizado para la monitorización y alertas dentro de las organizaciones.
 
 - ¿Cuáles son los "3 pilares" de la observabilidad? ¿Cuál aborda OpenTelemetry?
   Los 3 pilares de la observabilidad son trazas, métricas y logs; la forma en que pueden venir los datos.
