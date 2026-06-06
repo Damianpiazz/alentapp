@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY packages/api/package.json ./packages/api/
 COPY packages/web/package.json ./packages/web/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN npm ci
 
@@ -23,8 +24,10 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY packages/api/package.json ./packages/api/
+COPY packages/web/package.json ./packages/web/
+COPY packages/shared/package.json ./packages/shared/
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 COPY --from=build /app/packages/api/dist ./dist
 

@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "tsx watch src/app.ts",
         "test": "vitest",
-        "coverage": "vitest run --coverage"
+        "coverage": "vitest run --coverage",
+        "build": "tsc"
     },
     "dependencies": {
         "@fastify/cors": "^11.2.0",
