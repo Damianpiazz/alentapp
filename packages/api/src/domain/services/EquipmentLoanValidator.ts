@@ -42,7 +42,7 @@ export class EquipmentLoanValidator {
     }
 
     validateState(state: string) {
-        const validStates: EquipmentLoanStatus[] = ['Returned', 'Demaged'];
+        const validStates: EquipmentLoanStatus[] = ['Returned', 'Damaged'];
         if (!validStates.includes(state as EquipmentLoanStatus)) {
             throw new Error('El equipo ya fue devuelto');
         }

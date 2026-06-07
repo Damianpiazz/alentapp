@@ -83,7 +83,7 @@ export type UpdateLockerRequest = {
 // EquipmentLoan
 // ==========================================
 
-export type EquipmentLoanStatus = 'Loaned' | 'Returned' | 'Demaged';
+export type EquipmentLoanStatus = 'Loaned' | 'Returned' | 'Damaged';
 
 export interface EquipmentLoanDTO {
     id: string; // UUID
@@ -107,7 +107,7 @@ export interface SportDTO {
     additional_price: number;
     requires_medical_certificate: boolean;
     created_at: string;
-    deleted_at: string | null;
+    deleted_at?: string | null;
 }
 export interface CreateSportRequest {
     name: string;
