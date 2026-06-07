@@ -2,23 +2,102 @@
 
 ## 1.1. Analizar la infraestructura Docker actual
 
-| Problema                                                                       | ¿Dónde ocurre?                                                                             | Impacto   | Solución propuesta                                                                                                                                                                                                                                                                 |
-| :----------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- | :-------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Credenciales sensibles hardcodeadas en texto plano**                         | `docker-compose.yml` (líneas de entorno en servicios `db` y `api`)                         | **Alto**  | Remover las variables `POSTGRES_PASSWORD` y `DATABASE_URL` del archivo de configuración y utilizar un archivo `.env` externo mapeado mediante la directiva `env_file` o Docker Secrets.                                                                                            |
-| **Ausencia de políticas de reinicio automático (`restart`)**                   | `docker-compose.yml` (servicios `db`, `api` y `web`)                                       | **Alto**  | Agregar la directiva `restart: unless-stopped` a todos los servicios en el archivo de producción para garantizar que si un proceso falla o el servidor físico se reinicia, los contenedores vuelvan a levantarse automáticamente.                                                  |
-| **Instalación de dependencias de desarrollo en la imagen final**               | `packages/api/Dockerfile` y `packages/web/Dockerfile` (líneas `RUN npm install`)           | **Alto**  | Implementar un _multi-stage build_. Utilizar una primera etapa para instalar todas las dependencias y compilar TypeScript/Vite, y una etapa final limpia que solo conserve los artefactos necesarios. Para la API, instalar dependencias de producción usando `npm ci --omit=dev`. |
-| **Ejecución de procesos como usuario Root por defecto**                        | `packages/api/Dockerfile` y `packages/web/Dockerfile` (al no declarar la directiva `USER`) | **Alto**  | Forzar el uso de un usuario del sistema con privilegios reducidos antes del comando de ejecución final mediante la instrucción `USER node` (aprovechando que las imágenes Alpine de Node ya lo traen configurado por defecto).                                                     |
-| **Bindeo de volúmenes de desarrollo y comandos _watch_ o _dev_ en producción** | `docker-compose.yml` (secciones `volumes: - .:/app` y bloques `command`)                   | **Medio** | Remover los montajes de volúmenes locales en el entorno de producción. Las imágenes productivas deben ser inmutables, embebiendo el código ya compilado mediante la instrucción COPY y ejecutando los procesos en modo nativo sin observar cambios (watch)                         |
+# Fase 1: Analizar y proponer
 
-### Descripción detallada de los problemas identificados
+## 1.1. Analizar la infraestructura Docker actual
 
-- **Credenciales hardcodeadas:** En producción, si las contraseñas quedan expuestas en texto plano dentro de los archivos de configuración que se suben al repositorio, cualquier usuario con acceso al código (o al historial de Git) puede comprometer las bases de datos. Siguiendo las buenas prácticas del desarrollo moderno, el entorno debe ser agnóstico y recibir los secretos de forma externa en tiempo de ejecución.
-- **Ausencia de políticas de reinicio automático:** Actualmente, si la base de datos o la API sufren un error crítico inesperado que detiene el proceso de Node/Postgres, el contenedor se quedará en estado _Exited_ de forma permanente, dejando la aplicación caída hasta que un administrador entre manualmente a la consola a reiniciarla. En entornos productivos, el sistema debe ser auto-recuperable.
-- **Dependencias de desarrollo en producción:** Herramientas de compilación o ejecutables de pruebas solo se usan para escribir y validar código. Si se mantienen en la ejecución productiva, se incrementa innecesariamente el tamaño de la imagen y se regalan herramientas que un atacante podría aprovechar para compilar scripts maliciosos si logra vulnerar el contenedor.
-- **Ejecución como Root:** Por defecto, si no se especifica un usuario limitado, los procesos de Node de los contenedores se ejecutan con máximos privilegios de sistema. Si la aplicación sufre una vulnerabilidad de ejecución remota de código (RCE), un atacante tomará el control total del contenedor y facilitará un posible escape hacia el servidor físico que lo aloja.
-- **Volúmenes locales y comandos de desarrollo:** Mapear el directorio raíz (`.:/app`) y usar herramientas como `tsx watch` o `vite` en producción anula la inmutabilidad de los contenedores y degrada gravemente el rendimiento del sistema debido a la sincronización constante de archivos con el host, sumado al consumo innecesario de recursos del modo observación.
+| Problema                                                                  | ¿Dónde ocurre?                                                  | Impacto   | Solución propuesta                                                                                                |
+| :------------------------------------------------------------------------ | :-------------------------------------------------------------- | :-------- | :---------------------------------------------------------------------------------------------------------------- |
+| **Problema 1: Credenciales de la base de datos expuestas en texto plano** | `docker-compose.yml` (servicios `db` y `api`)                   | **Alto**  | Sacar las contraseñas del archivo y guardarlas en un archivo oculto `.env` que no se suba a GitHub.               |
+| **Problema 2: El contenedor de la API corre como usuario Root**           | `packages/api/Dockerfile` y `packages/web/Dockerfile`           | **Alto**  | Configurar un usuario normal sin permisos de administrador usando la directiva `USER` antes de arrancar la app.   |
+| **Problema 3: Falta un Healthcheck para saber si la API se congeló**      | `docker-compose.yml` (servicio `api`)                           | **Medio** | Agregar una prueba automática de salud con `healthcheck` para que Docker vigile si la API sigue respondiendo.     |
+| **Problema 4: Uso de versiones de Node fijas sin actualizar (Tag fijo)**  | `packages/api/Dockerfile` y `packages/web/Dockerfile` (línea 1) | **Bajo**  | Usar versiones específicas y exactas (ej. `node:20.11-alpine`) para evitar que parches automáticos rompan la app. |
+| **Problema 5: Exposición innecesaria de puertos internos al exterior**    | `docker-compose.yml` (servicio `db`, puerto `5432`)             | **Alto**  | Borrar la sección `ports` de la base de datos para que solo la API hable con ella por la red interna de Docker.   |
 
 ---
+
+## Detalle de cada problema
+
+#### Problema 1: Credenciales de la base de datos expuestas en texto plano
+
+```yaml
+# En docker-compose.yml
+environment:
+    POSTGRES_USER: admin
+    POSTGRES_PASSWORD: password123 #cualquiera que mire el codigo ve la contraseña
+    POSTGRES_DB: alentapp_db
+
+# Solución en docker-compose.yml
+environment:
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # ahora se lee la clave en secreto desde el archivo .env
+
+```
+
+### Problema 2: El contenedor de la API corre como usuario Root
+
+```yaml
+# En packages/api/Dockerfile (al no declarar un usuario corre como root)
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+CMD ["npm", "run", "dev", "-w", "packages/api"]
+
+# Solución en packages/api/Dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+USER node # cambia al usuario sin privilegios que ya trae la imagen de node
+CMD ["npm", "run", "dev", "-w", "packages/api"]
+```
+
+### Problema 3: Falta un Healthcheck para saber si la API se congeló
+
+```yaml
+# En docker-compose.yml
+api:
+    build: .
+    container_name: alentapp-api
+    ports:
+        - '3000:3000' # la API corre pero docker no monitorea si internamente se tilda
+
+# Solución en docker-compose.yml
+api:
+    build: .
+    container_name: alentapp-api
+    ports:
+        - '3000:3000'
+    healthcheck:
+        test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+```
+
+### Problema 4: Uso de versiones de Node fijas sin actualizar
+
+```yaml
+Dockerfile
+# En packages/api/Dockerfile y packages/web/Dockerfile
+FROM node:20-alpine # puede descargar subversiones distintas y romper la app en otra PC
+
+# Solución en packages/api/Dockerfile y packages/web/Dockerfile
+FROM node:20.11.0-alpine # versión exacta y fija garantizada para todo el equipo
+```
+
+### Problema 5: Exposición innecesaria de puertos internos al exterior
+
+```yaml
+# En docker-compose.yml
+db:
+    image: postgres:16-alpine
+    ports:
+        - '5432:5432' # expone la base de datos a ataques externos de todo internet
+
+# Solución en docker-compose.yml
+db:
+    image: postgres:16-alpine
+    # se elimina por completo la sección ports para dejar el acceso solo por la red interna
+```
 
 ## 1.2. Investigar OpenTelemetry
 
