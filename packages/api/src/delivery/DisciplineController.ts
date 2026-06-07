@@ -94,6 +94,7 @@ export class DisciplineController {
             return reply.status(200).send({ data: discipline });
         } catch (error: any) {
             if (error.message.includes('no existe')) {
+                errorCounter.add(1, { method, route, status: '404' });
                 return reply.status(404).send({ error: error.message });
             }
             if (
