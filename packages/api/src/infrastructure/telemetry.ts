@@ -1,43 +1,52 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { MeterProvider } from '@opentelemetry/sdk-metrics';
-import { metrics, Meter } from '@opentelemetry/api';
+import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
+import { metrics, ObservableResult } from '@opentelemetry/api';
 
-// Configurar Prometheus Exporter
 const prometheusExporter = new PrometheusExporter({
     port: 9464,
     endpoint: '/metrics',
 });
 
-// Crear SDK con auto-instrumentaciones
 const sdk = new NodeSDK({
     metricReader: prometheusExporter,
     instrumentations: [
         getNodeAutoInstrumentations({
             '@opentelemetry/instrumentation-http': {},
-            //'@opentelemetry/instrumentation-fastify': {},
         }),
+        new FastifyInstrumentation(),
     ],
 });
 
-// Iniciar SDK
 sdk.start();
 
 const meter = metrics.getMeter('alentapp-api');
 
-export function createREDMetrics(meter: Meter) {
-    const requestCounter = meter.createCounter('http.requests.total', {
-        description: 'Total de requests HTTP',
-    });
-    const errorCounter = meter.createCounter('http.requests.errors', {
-        description: 'Total de errores HTTP',
-    });
-    const requestDuration = meter.createHistogram('http.request.duration', {
-        description: 'Duración de requests',
-        unit: 'ms',
-    });
-    return { requestCounter, errorCounter, requestDuration };
-}
+export const requestCounter = meter.createCounter('http.requests.total', {
+    description: 'Total de requests HTTP',
+});
+export const errorCounter = meter.createCounter('http.requests.errors', {
+    description: 'Total de errores HTTP',
+});
+export const requestDuration = meter.createHistogram('http.request.duration', {
+    description: 'Duración de requests',
+    unit: 'ms',
+});
 
-export { sdk, meter, prometheusExporter };
+export const activeRequestsCounter = meter.createUpDownCounter(
+    'http.requests.active',
+    {
+        description: 'Requests siendo procesadas en este momento',
+    },
+);
+
+const memoryGauge = meter.createObservableGauge('process.memory.usage', {
+    description: 'Memoria heap utilizada por el proceso Node.js',
+    unit: 'bytes',
+});
+memoryGauge.addCallback((result: ObservableResult) => {
+    result.observe(process.memoryUsage().heapUsed);
+});
+
+export { sdk, prometheusExporter };

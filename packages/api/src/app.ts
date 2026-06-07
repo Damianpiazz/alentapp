@@ -4,6 +4,13 @@ import './infrastructure/telemetry.js';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
+import {
+    requestCounter,
+    errorCounter,
+    requestDuration,
+    activeRequestsCounter,
+    sdk,
+} from './infrastructure/telemetry.js';
 import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
 import { MemberValidator } from './domain/services/MemberValidator.js';
 import { CreateMemberUseCase } from './application/NewMemberUseCase.js';
@@ -75,6 +82,40 @@ export function buildApp() {
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
+    });
+
+    server.addHook('onRequest', async (request) => {
+        (request as any).__metrics_start = Date.now();
+        const route = request.url.split('?')[0];
+        (request as any).__metrics_raw_route = route;
+        activeRequestsCounter.add(1, { method: request.method, route });
+    });
+
+    server.addHook('preHandler', async (request) => {
+        const route = request.routeOptions?.url;
+        if (route) {
+            (request as any).__metrics_route = route;
+        }
+    });
+
+    server.addHook('onResponse', async (request, reply) => {
+        const start = (request as any).__metrics_start;
+        if (start === undefined) return;
+
+        const method = request.method;
+        const rawRoute = (request as any).__metrics_raw_route ?? 'unknown';
+        const route = (request as any).__metrics_route ?? rawRoute;
+        const duration = Date.now() - start;
+        const status = String(reply.statusCode);
+
+        requestDuration.record(duration, { method, route });
+        activeRequestsCounter.add(-1, { method, route: rawRoute });
+
+        if (parseInt(status) >= 400) {
+            errorCounter.add(1, { method, route, status });
+        } else {
+            requestCounter.add(1, { method, route, status });
+        }
     });
 
     // ==========================================
@@ -432,7 +473,7 @@ if (
     ['SIGINT', 'SIGTERM'].forEach((signal) => {
         process.on(signal, async () => {
             await server.close();
-
+            await sdk.shutdown();
             process.exit(0);
         });
     });
