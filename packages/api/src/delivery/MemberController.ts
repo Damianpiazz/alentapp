@@ -5,6 +5,8 @@ import { UpdateMemberUseCase } from '../application/UpdateMemberUseCase.js';
 import { DeleteMemberUseCase } from '../application/DeleteMemberUseCase.js';
 import { CreateMemberRequest, UpdateMemberRequest } from '@alentapp/shared';
 
+import { metrics } from '@opentelemetry/api';
+
 export class MemberController {
     constructor(
         private readonly createMemberUseCase: CreateMemberUseCase,
@@ -37,26 +39,39 @@ export class MemberController {
             if (error.message.includes('inválido')) {
                 return reply.status(400).send({ error: error.message });
             }
-            return reply.status(500).send({ error: "Error interno, reintente más tarde" });
+            return reply
+                .status(500)
+                .send({ error: 'Error interno, reintente más tarde' });
         }
     }
 
     async update(
-        request: FastifyRequest<{ Params: { id: string }; Body: UpdateMemberRequest }>,
+        request: FastifyRequest<{
+            Params: { id: string };
+            Body: UpdateMemberRequest;
+        }>,
         reply: FastifyReply,
     ) {
         try {
             const { id } = request.params;
-            const socio = await this.updateMemberUseCase.execute(id, request.body);
+            const socio = await this.updateMemberUseCase.execute(
+                id,
+                request.body,
+            );
             return reply.status(200).send({ data: socio });
         } catch (error: any) {
             if (error.message.includes('Ya existe un miembro con ese DNI')) {
                 return reply.status(409).send({ error: error.message });
             }
-            if (error.message.includes('inválido') || error.message.includes('no existe')) {
+            if (
+                error.message.includes('inválido') ||
+                error.message.includes('no existe')
+            ) {
                 return reply.status(400).send({ error: error.message });
             }
-            return reply.status(500).send({ error: "Error interno, reintente más tarde" });
+            return reply
+                .status(500)
+                .send({ error: 'Error interno, reintente más tarde' });
         }
     }
 
