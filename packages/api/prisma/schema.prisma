@@ -27,7 +27,7 @@ enum MemberStatus {
 enum EquipmentLoanStatus {
     Loaned
     Returned
-    Demaged
+    Damaged
 }
 
 model Member {

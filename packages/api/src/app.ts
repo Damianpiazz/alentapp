@@ -1,3 +1,6 @@
+// PRIMERO: inicializar OpenTelemetry (antes de cualquier otro import)
+import './infrastructure/telemetry.js';
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
@@ -236,6 +239,10 @@ export function buildApp() {
         };
     });
 
+    server.get('/health', async (request, reply) => {
+        return reply.status(200).send({ status: 'ok' });
+    });
+
     console.log('LOCKER ROUTES REGISTERED');
     console.log(server.printRoutes());
     // =========================
@@ -405,7 +412,10 @@ export function buildApp() {
     return server;
 }
 
-if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
+if (
+    process.argv[1] &&
+    (process.argv[1].endsWith('app.ts') || process.argv[1].endsWith('app.js'))
+) {
     const server = buildApp();
 
     const port = parseInt(process.env.PORT || '3000', 10);
