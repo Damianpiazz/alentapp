@@ -115,4 +115,8 @@ COPY --from=build /app/packages/api/src/generated ./dist/generated
 
 **Solución:** se agregó `extra_hosts: host.docker.internal:host-gateway` en el servicio de Prometheus en `docker-compose.observability.yml`, y se actualizó `prometheus.yml` para apuntar a `host.docker.internal:9464` en lugar de `localhost:9464`.
 
+---
+
+#### No renderizaba la pagina por los workers del docker-compose.prod
+
 ## Dashboard RED
