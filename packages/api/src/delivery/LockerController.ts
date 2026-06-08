@@ -14,7 +14,7 @@ import { DeleteLockerUseCase } from '../application/DeleteLockerUseCase.js';
 
 import { createREDMetrics, meter } from '../infrastructure/telemetry.js';
 
-const { requestCounter, errorCounter, requestDuration } =
+const { requestCounter, errorCounter, requestDuration, activeRequests } =
     createREDMetrics(meter);
 
 export class LockerController {
