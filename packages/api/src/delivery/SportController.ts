@@ -7,7 +7,7 @@ import { CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
 
 import { createREDMetrics, meter } from '../infrastructure/telemetry.js';
 
-const { requestCounter, errorCounter, requestDuration } =
+const { requestCounter, errorCounter, requestDuration, activeRequests } =
     createREDMetrics(meter);
 
 export class SportController {
@@ -20,7 +20,7 @@ export class SportController {
     async getAll(request: FastifyRequest, reply: FastifyReply) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const sports = await this.getSportsUseCase.execute();
             requestCounter.add(1, { method, route, status: '200' });
@@ -38,7 +38,7 @@ export class SportController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             request.log.info('Alguien pegó al endpoint de sports');
             const sport = await this.createSportUseCase.execute(request.body);
@@ -78,7 +78,7 @@ export class SportController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const { id } = request.params;
             const sport = await this.updateSportUseCase.execute(
@@ -118,7 +118,7 @@ export class SportController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const { id } = request.params;
             await this.deleteSportUseCase.execute(id);
