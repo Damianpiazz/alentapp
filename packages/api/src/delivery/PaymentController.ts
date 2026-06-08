@@ -8,7 +8,7 @@ import { DeletePaymentUseCase } from '../application/DeletePaymentUseCase.js';
 
 import { createREDMetrics, meter } from '../infrastructure/telemetry.js';
 
-const { requestCounter, errorCounter, requestDuration } =
+const { requestCounter, errorCounter, requestDuration, activeRequests } =
     createREDMetrics(meter);
 
 export class PaymentController {
@@ -23,7 +23,7 @@ export class PaymentController {
     async getAll(request: FastifyRequest, reply: FastifyReply) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const payments = await this.getPaymentsUseCase.execute();
             requestCounter.add(1, { method, route, status: '200' });
@@ -45,7 +45,7 @@ export class PaymentController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const { id } = request.params;
             const payment = await this.getPaymentByIdUseCase.execute(id);
@@ -72,7 +72,7 @@ export class PaymentController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const payment = await this.createPaymentUseCase.execute(
                 request.body,
@@ -120,7 +120,7 @@ export class PaymentController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const { id } = request.params;
             const payment = await this.updatePaymentUseCase.execute(
@@ -168,7 +168,7 @@ export class PaymentController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const { id } = request.params;
             await this.deletePaymentUseCase.execute(id);
