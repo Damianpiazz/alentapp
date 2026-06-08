@@ -37,7 +37,19 @@ export function createREDMetrics(meter: Meter) {
         description: 'Duración de requests',
         unit: 'ms',
     });
-    return { requestCounter, errorCounter, requestDuration };
+    const activeRequests = meter.createUpDownCounter('http.requests.active', {
+        description: 'Requests siendo procesadas en este momento',
+    });
+    return { requestCounter, errorCounter, requestDuration, activeRequests };
 }
+
+meter
+    .createObservableGauge('process.memory.usage', {
+        description: 'Memoria heap utilizada por el proceso Node.js',
+        unit: 'bytes',
+    })
+    .addCallback((result) => {
+        result.observe(process.memoryUsage().heapUsed);
+    });
 
 export { sdk, meter, prometheusExporter };
