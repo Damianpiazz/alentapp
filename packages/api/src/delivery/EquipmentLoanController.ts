@@ -7,7 +7,7 @@ import { DeleteEquipmentLoanUseCase } from '../application/DeleteEquipmentLoanUs
 
 import { createREDMetrics, meter } from '../infrastructure/telemetry.js';
 
-const { requestCounter, errorCounter, requestDuration } =
+const { requestCounter, errorCounter, requestDuration, activeRequests } =
     createREDMetrics(meter);
 
 export class EquipmentLoanController {
@@ -21,7 +21,7 @@ export class EquipmentLoanController {
     async getAll(request: FastifyRequest, reply: FastifyReply) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const prestamos = await this.getEquipmentLoanUseCase.execute();
             requestCounter.add(1, { method, route, status: '200' });
@@ -40,7 +40,7 @@ export class EquipmentLoanController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             request.log.info(
                 'Alguien pegó al endpoint de crear préstamo de equipo',
@@ -85,7 +85,7 @@ export class EquipmentLoanController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const { id } = request.params;
             const { status } = request.body;
@@ -125,7 +125,7 @@ export class EquipmentLoanController {
     ) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const { id } = request.params;
             await this.deleteEquipmentLoanUseCase.execute(id);
