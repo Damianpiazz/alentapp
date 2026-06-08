@@ -24,9 +24,9 @@ flowchart TD
 
 &nbsp; La versión instalada de `@opentelemetry/auto-instrumentations-node` no expone `@opentelemetry/instrumentation-fastify` como clave válida en `InstrumentationConfigMap`. Fastify queda instrumentado automáticamente por `getNodeAutoInstrumentations` sin necesidad de declararlo explícitamente.
 
-#### 3. `req.url.split('?')[0]` para el label `route`
+#### 3. `routeOptions?.url` para el label `route`
 
-&nbsp; Lo correcto para evitar cardinalidad infinita en Prometheus sería `routeOptions?.url`, que devuelve el template de ruta (`/api/v1/socios/:id`) en lugar del valor real (`/api/v1/socios/123`). Sin embargo, el enunciado usa `req.url.split('?')[0]` en su ejemplo, por lo que se siguió ese criterio para mantener consistencia con lo planteado por la cátedra.
+&nbsp; El enunciado usa `req.url.split('?')[0]` en su ejemplo de las metricas para cada controlador. Sin embargo, consideramos lo correcto para evitar cardinalidad infinita en Prometheus sería `routeOptions?.url`, que devuelve el template de ruta (`/api/v1/socios/:id`) en lugar del valor real (`/api/v1/socios/123`).
 
 #### 4. `docker-compose.observability.yml` separado del compose principal
 
@@ -120,3 +120,9 @@ COPY --from=build /app/packages/api/src/generated ./dist/generated
 #### No renderizaba la pagina por los workers del docker-compose.prod
 
 ## Dashboard RED
+
+![alt text](capturas/captura1.jpeg)
+
+![alt text](capturas/captura2.jpeg)
+
+![alt text](capturas/captura3.jpeg)
