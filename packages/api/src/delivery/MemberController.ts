@@ -17,7 +17,7 @@ esto era sugerencia del docs pero deberiamos importarlo de el archivo telemetry(
 
 import { createREDMetrics, meter } from '../infrastructure/telemetry.js';
 
-const { requestCounter, errorCounter, requestDuration } =
+const { requestCounter, errorCounter, requestDuration, activeRequests } =
     createREDMetrics(meter);
 
 export class MemberController {
@@ -31,7 +31,7 @@ export class MemberController {
     async getAll(request: FastifyRequest, reply: FastifyReply) {
         const start = Date.now();
         const method = request.method;
-        const route = request.url.split('?')[0];
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
         try {
             const socios = await this.getMembersUseCase.execute();
             requestCounter.add(1, { method, route, status: '200' });
