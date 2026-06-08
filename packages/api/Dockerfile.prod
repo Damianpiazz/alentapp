@@ -32,8 +32,12 @@ RUN npm ci --omit=dev --ignore-scripts
 
 COPY --from=build /app/packages/api/dist ./dist
 COPY --from=build /app/packages/api/src/generated ./dist/generated
+COPY --from=build /app/packages/api/prisma ./prisma
+COPY --from=build /app/packages/api/prisma.config.ts ./
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN chown -R appuser:appgroup /app/node_modules/@prisma
+
 USER appuser
 
 EXPOSE 3000
@@ -41,4 +45,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["node", "dist/app.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/app.js"]
