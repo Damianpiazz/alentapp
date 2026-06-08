@@ -1,0 +1,188 @@
+{
+    "__inputs": [],
+    "__requires": [],
+    "title": "RED — Alentapp API",
+    "version": 1,
+    "schemaVersion": 36,
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+        "from": "now-15m",
+        "to": "now"
+    },
+    "panels": [
+        {
+            "id": 1,
+            "title": "Requests por segundo",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "custom": {
+                        "showPoints": "never"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "rate(http_requests_total[1m])",
+                    "legendFormat": "{{method}} {{route}} {{status}}"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "title": "Tasa de error (%)",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "custom": {
+                        "showPoints": "never"
+                    },
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(http_requests_errors_total[1m])) / sum(rate(http_requests_total[1m])) * 100",
+                    "legendFormat": "error %"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "Latencia p95",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms",
+                    "custom": {
+                        "showPoints": "never"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_bucket[5m])) by (le))",
+                    "legendFormat": "p95"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "title": "Distribución por status code",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "showPoints": "never",
+                        "fillOpacity": 40
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "stack": true,
+            "targets": [
+                {
+                    "expr": "sum by (status) (rate(http_requests_total[5m]))",
+                    "legendFormat": "{{status}}"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "title": "Memoria del proceso",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "megbytes",
+                    "custom": {
+                        "showPoints": "never"
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "process_memory_usage / 1024 / 1024",
+                    "legendFormat": "heap MB"
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "title": "Endpoints más lentos (top 5)",
+            "type": "bargauge",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms",
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 200
+                            },
+                            {
+                                "color": "red",
+                                "value": 500
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "expr": "topk(5, avg by (route) (rate(http_request_duration_sum[5m]) / rate(http_request_duration_count[5m])))",
+                    "legendFormat": "{{route}}"
+                }
+            ]
+        }
+    ]
+}
